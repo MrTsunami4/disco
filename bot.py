@@ -2,6 +2,8 @@ import os
 import datetime
 from typing import Optional
 from dotenv import load_dotenv
+from asyncache import cached
+from cachetools import Cache, TTLCache
 import requests
 
 import discord
@@ -17,7 +19,7 @@ GENERAL_CHANNEL_ID = int(os.getenv("GENERAL_CHANNEL_ID"))
 
 MY_GUILD = discord.Object(id=GUILD_ID)
 
-tz = datetime.timezone(datetime.timedelta(hours=+1))
+tz = datetime.timezone(datetime.timedelta(hours=+2))
 
 when = datetime.time(hour=0, minute=0, tzinfo=tz)
 
@@ -27,6 +29,41 @@ def embed_from_quote(quote: dict):
     embed.description = quote['content']
     embed.set_author(name=quote['author'])
     return embed
+
+
+class Dropdown(discord.ui.Select):
+    def __init__(self):
+
+        # Set the options that will be presented inside the dropdown
+        options = [
+            discord.SelectOption(
+                label='Red', description='Your favourite colour is red', emoji='🟥'),
+            discord.SelectOption(
+                label='Green', description='Your favourite colour is green', emoji='🟩'),
+            discord.SelectOption(
+                label='Blue', description='Your favourite colour is blue', emoji='🟦'),
+        ]
+
+        # The placeholder is what will be shown when no option is chosen
+        # The min and max values indicate we can only pick one of the three options
+        # The options parameter defines the dropdown options. We defined this above
+        super().__init__(placeholder='Choose your favourite colour...',
+                         min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction: discord.Interaction):
+        # Use the interaction object to send a response message containing
+        # the user's favourite colour or choice. The self object refers to the
+        # Select object, and the values attribute gets a list of the user's
+        # selected options. We only want the first one.
+        await interaction.response.send_message(f'Your favourite colour is {self.values[0]}')
+
+
+class DropdownView(discord.ui.View):
+    def __init__(self):
+        super().__init__()
+
+        # Adds the dropdown to our view object.
+        self.add_item(Dropdown())
 
 
 class MyClient(discord.Client):
@@ -106,26 +143,62 @@ async def quote(interaction: discord.Interaction):
     await interaction.response.send_message(embed=embed_from_quote(quote))
 
 
+@cached(cache=TTLCache(maxsize=1024, ttl=600))
+async def get_weather_json(city: str):
+    try:
+        weather_response = requests.get(
+            f'https://api.weatherapi.com/v1/current.json?key={WEATHER_API_KEY}&q={city}&aqi=no')
+        weather_response.raise_for_status()
+        forecast_response = requests.get(
+            f'https://api.weatherapi.com/v1/forecast.json?key={WEATHER_API_KEY}&q={city}&days=1&aqi=no&alerts=no')
+        forecast_response.raise_for_status()
+    except Exception as e:
+        raise e
+    return weather_response.json(), forecast_response.json()
+
+
 @client.tree.command()
 @app_commands.describe(city='The city you want to get the weather for')
 async def weather(interaction: discord.Interaction, city: str):
     """Get the current weather"""
     try:
-        response = requests.get(
-            f'http://api.weatherapi.com/v1/current.json?key={WEATHER_API_KEY}&q={city}&aqi=no')
-        response.raise_for_status()
-        second_response = requests.get(
-            f'http://api.weatherapi.com/v1/forecast.json?key={WEATHER_API_KEY}&q={city}&days=1&aqi=no&alerts=no')
-        second_response.raise_for_status()
+        weather_response, forecast_response = await get_weather_json(city)
     except Exception as e:
-        await interaction.response.send_message("Something went wrong, please try again")
+        await interaction.response.send_message(f'Error: {e}')
         return
-    current_temp = response.json()['current']['temp_c']
-    forecast = second_response.json()['forecast']['forecastday'][0]
+    current_temp = weather_response['current']['temp_c']
+    forecast = forecast_response['forecast']['forecastday'][0]
     forecast_min = forecast['day']['mintemp_c']
     forecast_max = forecast['day']['maxtemp_c']
     embed = discord.Embed(title="Weather")
     embed.description = f'Current temperature: {current_temp}°C\n' f'Forecast: Min: {forecast_min}°C, Max: {forecast_max}°C'
     await interaction.response.send_message(embed=embed)
 
-client.run(TOKEN)
+
+@client.tree.command()
+async def color(interaction: discord.Interaction):
+    """Sends a random color."""
+    await interaction.response.send_message(view=DropdownView())
+
+
+@cached(cache=Cache(maxsize=2048))
+def fib(n: int):
+    if n <= 1:
+        return n
+    return fib(n - 1) + fib(n - 2)
+
+
+@client.tree.command()
+async def fibonacci(interaction: discord.Interaction, n: int):
+    """Sends the nth fibonacci number."""
+    await interaction.response.send_message(f'{n}th fibonacci number is {fib(n)}')
+
+
+@client.event
+async def on_member_join(member: discord.Member):
+    guild = member.guild
+    channel = client.get_channel(GENERAL_CHANNEL_ID)
+    await channel.send(f'Welcome {member.mention} to {guild.name}!')
+
+if __name__ == "__main__":
+    client.run(TOKEN)
