@@ -1,33 +1,35 @@
-import os
-import datetime
-from typing import Optional
+from os import getenv
+from datetime import datetime
+from typing import Iterator, Optional
 from dotenv import load_dotenv
 from asyncache import cached
-from cachetools import Cache, TTLCache
-import requests
+from cachetools import TTLCache
+from requests import get
 
 import discord
 from discord import app_commands
 from discord.ext import tasks
 
+from helper import nth_element
+
 load_dotenv()
 
-GUILD_ID = int(os.getenv("GUILD_ID"))
-TOKEN = os.getenv("DISCORD_TOKEN")
-WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
-GENERAL_CHANNEL_ID = int(os.getenv("GENERAL_CHANNEL_ID"))
+GUILD_ID = int(getenv("GUILD_ID"))
+TOKEN = getenv("DISCORD_TOKEN")
+WEATHER_API_KEY = getenv("WEATHER_API_KEY")
+GENERAL_CHANNEL_ID = int(getenv("GENERAL_CHANNEL_ID"))
 
 MY_GUILD = discord.Object(id=GUILD_ID)
 
-tz = datetime.timezone(datetime.timedelta(hours=+2))
+tz = datetime.timezone(datetime.timedelta(hours=1), "CET")
 
 when = datetime.time(hour=0, minute=0, tzinfo=tz)
 
 
-def embed_from_quote(quote: dict):
+def embed_from_quote(my_quote: dict):
     embed = discord.Embed(title="Quote")
-    embed.description = quote['content']
-    embed.set_author(name=quote['author'])
+    embed.description = my_quote['content']
+    embed.set_author(name=my_quote['author'])
     return embed
 
 
@@ -67,8 +69,8 @@ class DropdownView(discord.ui.View):
 
 
 class MyClient(discord.Client):
-    def __init__(self, *, intents: discord.Intents):
-        super().__init__(intents=intents)
+    def __init__(self, *, client_intents: discord.Intents):
+        super().__init__(intents=client_intents)
         self.tree = app_commands.CommandTree(self)
 
     async def setup_hook(self):
@@ -79,9 +81,9 @@ class MyClient(discord.Client):
     @tasks.loop(time=when)
     async def quote_task(self):
         channel = self.get_channel(GENERAL_CHANNEL_ID)
-        response = requests.get("https://api.quotable.io/random?maxLength=230")
-        quote = response.json()
-        await channel.send(embed=embed_from_quote(quote))
+        response = get("https://api.quotable.io/random?maxLength=230")
+        my_quote = response.json()
+        await channel.send(embed=embed_from_quote(my_quote))
 
     @quote_task.before_loop
     async def before_quote_task(self):
@@ -89,7 +91,7 @@ class MyClient(discord.Client):
 
 
 intents = discord.Intents.default()
-client = MyClient(intents=intents)
+client = MyClient(client_intents=intents)
 
 
 @client.event
@@ -123,7 +125,8 @@ async def send(interaction: discord.Interaction, text_to_send: str):
 
 
 @client.tree.command()
-@app_commands.describe(member='The member you want to get the joined date from; defaults to the user who uses the command')
+@app_commands.describe(member='The member you want to get the joined date from; defaults to the user who uses the '
+                              'command')
 async def joined(interaction: discord.Interaction, member: Optional[discord.Member] = None):
     """Says when a member joined."""
     member = member or interaction.user
@@ -138,18 +141,18 @@ async def show_join_date(interaction: discord.Interaction, member: discord.Membe
 @client.tree.command()
 async def quote(interaction: discord.Interaction):
     """Sends a random quote."""
-    response = requests.get('https://api.quotable.io/random?maxLength=230')
-    quote = response.json()
-    await interaction.response.send_message(embed=embed_from_quote(quote))
+    response = get('https://api.quotable.io/random?maxLength=230')
+    my_quote = response.json()
+    await interaction.response.send_message(embed=embed_from_quote(my_quote))
 
 
 @cached(cache=TTLCache(maxsize=1024, ttl=600))
 async def get_weather_json(city: str):
     try:
-        weather_response = requests.get(
+        weather_response = get(
             f'https://api.weatherapi.com/v1/current.json?key={WEATHER_API_KEY}&q={city}&aqi=no')
         weather_response.raise_for_status()
-        forecast_response = requests.get(
+        forecast_response = get(
             f'https://api.weatherapi.com/v1/forecast.json?key={WEATHER_API_KEY}&q={city}&days=1&aqi=no&alerts=no')
         forecast_response.raise_for_status()
     except Exception as e:
@@ -171,7 +174,7 @@ async def weather(interaction: discord.Interaction, city: str):
     forecast_min = forecast['day']['mintemp_c']
     forecast_max = forecast['day']['maxtemp_c']
     embed = discord.Embed(title="Weather")
-    embed.description = f'Current temperature: {current_temp}°C\n' f'Forecast: Min: {forecast_min}°C, Max: {forecast_max}°C'
+    embed.description = f'Current temperature: {current_temp}°C\n' f'Forecast: Min: {forecast_min}°C, Max: {forecast_max}°C '
     await interaction.response.send_message(embed=embed)
 
 
@@ -181,11 +184,15 @@ async def color(interaction: discord.Interaction):
     await interaction.response.send_message(view=DropdownView())
 
 
-@cached(cache=Cache(maxsize=2048))
-def fib(n: int):
-    if n <= 1:
-        return n
-    return fib(n - 1) + fib(n - 2)
+def fibo_gen() -> Iterator[int]:
+    a, b = 0, 1
+    while True:
+        yield a
+        a, b = b, a + b
+
+
+def fib(n: int) -> int:
+    return nth_element(fibo_gen(), n)
 
 
 @client.tree.command()
