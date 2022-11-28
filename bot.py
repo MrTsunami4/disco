@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from asyncache import cached
 from cachetools import TTLCache
 from requests import get
+from pytz import timezone
 
 import discord
 from discord import app_commands
@@ -21,9 +22,12 @@ GENERAL_CHANNEL_ID = int(getenv("GENERAL_CHANNEL_ID"))
 
 MY_GUILD = discord.Object(id=GUILD_ID)
 
-tz = datetime.timezone(datetime.timedelta(hours=1), "CET")
 
-when = datetime.time(hour=0, minute=0, tzinfo=tz)
+tz = timezone('Europe/Paris')
+
+# Get midnight in Paris
+when = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0,
+                                 tzinfo=timezone('UTC')).astimezone(tz)
 
 
 def embed_from_quote(my_quote: dict):
