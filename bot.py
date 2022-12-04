@@ -25,9 +25,12 @@ MY_GUILD = discord.Object(id=GUILD_ID)
 
 tz = timezone('Europe/Paris')
 
+current_time = datetime.now(tz)
+
 # Get midnight in Paris
-when = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0,
-                                 tzinfo=timezone('UTC')).astimezone(tz)
+midnight = current_time.replace(hour=0, minute=0, second=0, microsecond=0)
+
+midnight_time = datetime.time(midnight)
 
 
 def embed_from_quote(my_quote: dict):
@@ -82,7 +85,7 @@ class MyClient(discord.Client):
         self.quote_task.start()
         await self.tree.sync(guild=MY_GUILD)
 
-    @tasks.loop(time=when)
+    @tasks.loop(time=midnight_time)
     async def quote_task(self):
         channel = self.get_channel(GENERAL_CHANNEL_ID)
         response = get("https://api.quotable.io/random?maxLength=230")
