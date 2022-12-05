@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 from asyncache import cached
 from cachetools import TTLCache
 from requests import get
-from pytz import timezone
 
 import discord
 from discord import app_commands
@@ -23,12 +22,9 @@ GENERAL_CHANNEL_ID = int(getenv("GENERAL_CHANNEL_ID"))
 MY_GUILD = discord.Object(id=GUILD_ID)
 
 
-tz = timezone('Europe/Paris')
+time = datetime.now()
 
-current_time = datetime.now(tz)
-
-# Get midnight in Paris
-midnight = current_time.replace(hour=0, minute=0, second=0, microsecond=0)
+midnight = time.replace(hour=0, minute=0, second=0, microsecond=0)
 
 midnight_time = datetime.time(midnight)
 
