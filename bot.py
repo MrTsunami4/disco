@@ -1,6 +1,7 @@
 from os import getenv
 from datetime import datetime
 from typing import Iterator, Optional
+from urllib.error import HTTPError
 from dotenv import load_dotenv
 from asyncache import cached
 from cachetools import TTLCache
@@ -158,8 +159,8 @@ async def get_weather_json(city: str):
         forecast_response = get(
             f'https://api.weatherapi.com/v1/forecast.json?key={WEATHER_API_KEY}&q={city}&days=1&aqi=no&alerts=no')
         forecast_response.raise_for_status()
-    except Exception as e:
-        raise e
+    except HTTPError as e:
+        raise e.code
     return weather_response.json(), forecast_response.json()
 
 
