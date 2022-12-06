@@ -160,7 +160,7 @@ async def get_weather_json(city: str):
             f'https://api.weatherapi.com/v1/forecast.json?key={WEATHER_API_KEY}&q={city}&days=1&aqi=no&alerts=no')
         forecast_response.raise_for_status()
     except HTTPError as e:
-        raise e.code
+        raise e
     return weather_response.json(), forecast_response.json()
 
 
@@ -170,8 +170,8 @@ async def weather(interaction: discord.Interaction, city: str):
     """Get the current weather"""
     try:
         weather_response, forecast_response = await get_weather_json(city)
-    except Exception as e:
-        await interaction.response.send_message(f'Error: {e}')
+    except HTTPError as e:
+        await interaction.response.send_message(f'Error: {e.code} {e.reason}')
         return
     current_temp = weather_response['current']['temp_c']
     forecast = forecast_response['forecast']['forecastday'][0]
