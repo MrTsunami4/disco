@@ -1,16 +1,21 @@
+"""A bot that uses slash commands and context menus."""
+import typing
+from datetime import datetime, timedelta
 from os import getenv
-from datetime import datetime
-from typing import Iterator, Optional
-from dotenv import load_dotenv
-from asyncache import cached
-from cachetools import TTLCache
-from requests import get
+from typing import Optional
 
 import discord
+from asyncache import cached
+from cachetools import TTLCache
 from discord import app_commands
 from discord.ext import tasks
+from dotenv import load_dotenv
+from requests import get
 
 from helper import nth_element
+
+if typing.TYPE_CHECKING:
+    from collections.abc import Iterator
 
 load_dotenv()
 
@@ -24,7 +29,12 @@ MY_GUILD = discord.Object(id=GUILD_ID)
 
 time = datetime.now()
 
-midnight = time.replace(hour=0, minute=0, second=0, microsecond=0)
+
+midnight = time.replace(hour=0, minute=0, second=0,
+                        microsecond=0) + timedelta(days=1)
+
+# Remove one hour
+midnight -= timedelta(hours=1)
 
 midnight_time = datetime.time(midnight)
 
@@ -105,7 +115,7 @@ async def on_ready():
 
 @client.tree.command()
 async def hello(interaction: discord.Interaction):
-    """Says hello!"""
+    """Says hello!."""
     await interaction.response.send_message(f'Hi, {interaction.user.mention}')
 
 
@@ -115,7 +125,7 @@ async def hello(interaction: discord.Interaction):
     second_value='The value you want to add to the first value',
 )
 async def add(interaction: discord.Interaction, first_value: int, second_value: int):
-    """Adds two numbers together."""
+    """Add two numbers together."""
     await interaction.response.send_message(f'{first_value} + {second_value} = {first_value + second_value}')
 
 
@@ -153,7 +163,7 @@ async def quote(interaction: discord.Interaction):
 async def get_weather_json(city: str):
     try:
         weather_response = get(
-            f'https://api.weatherapi.com/v1/current.json?key={WEATHER_API_KEY}&q={city}&aqi=no')
+            f"https://api.weatherapi.com/v1/current.json?key={WEATHER_API_KEY}&q={city}&aqi=no", timeout=5)
         weather_response.raise_for_status()
         forecast_response = get(
             f'https://api.weatherapi.com/v1/forecast.json?key={WEATHER_API_KEY}&q={city}&days=1&aqi=no&alerts=no')
@@ -169,7 +179,7 @@ async def weather(interaction: discord.Interaction, city: str):
     """Get the current weather"""
     try:
         weather_response, forecast_response = await get_weather_json(city)
-    except Exception as _e:
+    except Exception:
         await interaction.response.send_message(f'Error: the city "{city}" was not found')
         return
     current_temp = weather_response['current']['temp_c']
@@ -201,14 +211,13 @@ def fib(n: int) -> int:
 # @client.tree.command()
 # async def fibonacci(interaction: discord.Interaction, n: int):
 #     """Sends the nth fibonacci number."""
-#     await interaction.response.send_message(f'{n}th fibonacci number is {fib(n)}')
 
 
 @client.event
 async def on_member_join(member: discord.Member):
     guild = member.guild
     channel = client.get_channel(GENERAL_CHANNEL_ID)
-    await channel.send(f'Welcome {member.mention} to {guild.name}!')
+    await channel.send(f"Welcome {member.mention} to {guild.name}!")
 
 if __name__ == "__main__":
     client.run(TOKEN)
