@@ -1,3 +1,0 @@
-[tool.ruff]
-# Enable all the tools
-select = ["ALL"]
