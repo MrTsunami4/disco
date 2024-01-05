@@ -1,21 +1,17 @@
-"""A bot that uses slash commands and context menus."""
-import typing
-from datetime import datetime, timedelta
 from os import getenv
-from typing import Optional
-
-import discord
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
+from typing import Iterator, Optional
+from dotenv import load_dotenv
 from asyncache import cached
 from cachetools import TTLCache
+from requests import get, post
+
+import discord
 from discord import app_commands
 from discord.ext import tasks
-from dotenv import load_dotenv
-from requests import get
 
 from helper import nth_element
-
-if typing.TYPE_CHECKING:
-    from collections.abc import Iterator
 
 load_dotenv()
 
@@ -27,16 +23,11 @@ GENERAL_CHANNEL_ID = int(getenv("GENERAL_CHANNEL_ID"))
 MY_GUILD = discord.Object(id=GUILD_ID)
 
 
-time = datetime.now()
+tt = datetime.now(ZoneInfo("Europe/Paris"))
+md = tt.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+mid = md.timetz()
 
 
-midnight = time.replace(hour=0, minute=0, second=0,
-                        microsecond=0) + timedelta(days=1)
-
-# Remove one hour
-midnight -= timedelta(hours=1)
-
-midnight_time = datetime.time(midnight)
 
 
 def embed_from_quote(my_quote: dict):
@@ -91,7 +82,7 @@ class MyClient(discord.Client):
         self.quote_task.start()
         await self.tree.sync(guild=MY_GUILD)
 
-    @tasks.loop(time=midnight_time)
+    @tasks.loop(time=mid)
     async def quote_task(self):
         channel = self.get_channel(GENERAL_CHANNEL_ID)
         response = get("https://api.quotable.io/random?maxLength=230")
@@ -115,7 +106,7 @@ async def on_ready():
 
 @client.tree.command()
 async def hello(interaction: discord.Interaction):
-    """Says hello!."""
+    """Says hello!"""
     await interaction.response.send_message(f'Hi, {interaction.user.mention}')
 
 
@@ -125,7 +116,7 @@ async def hello(interaction: discord.Interaction):
     second_value='The value you want to add to the first value',
 )
 async def add(interaction: discord.Interaction, first_value: int, second_value: int):
-    """Add two numbers together."""
+    """Adds two numbers together."""
     await interaction.response.send_message(f'{first_value} + {second_value} = {first_value + second_value}')
 
 
@@ -143,12 +134,35 @@ async def send(interaction: discord.Interaction, text_to_send: str):
 async def joined(interaction: discord.Interaction, member: Optional[discord.Member] = None):
     """Says when a member joined."""
     member = member or interaction.user
-    await interaction.response.send_message(f'{member} joined {discord.utils.format_dt(member.joined_at)}')
+    await interaction.response.send_message(f'{member} joined {discord.utils.format_dt(member.joined_at)}', ephemeral=True)
 
 
 @client.tree.context_menu(name='Show Join Date')
 async def show_join_date(interaction: discord.Interaction, member: discord.Member):
-    await interaction.response.send_message(f'{member} joined at {discord.utils.format_dt(member.joined_at)}')
+    await interaction.response.send_message(f'{member} joined at {discord.utils.format_dt(member.joined_at)}', ephemeral=True)
+
+
+@client.tree.context_menu(name='Translate')
+async def translate(interaction: discord.Interaction, message: discord.Message):
+    await interaction.response.defer(ephemeral=True)
+    """Translate text to another language."""
+    try:
+        response = post('https://translate.argosopentech.com/translate', json={
+            'q': message.content,
+            'source': 'fr',
+            'target': 'en'
+        }, timeout=30)
+        response.raise_for_status()
+    except Exception as e:
+        await interaction.followup.send(f'An error occurred: {e}', ephemeral=True)
+        return
+    try:
+        json = response.json()
+        translated_text = json['translatedText']
+    except Exception as e:
+        await interaction.followup.send(f'An error occurred: {e}', ephemeral=True)
+        return
+    await interaction.followup.send(f'Translated text: {translated_text}', ephemeral=True)
 
 
 @client.tree.command()
@@ -163,7 +177,7 @@ async def quote(interaction: discord.Interaction):
 async def get_weather_json(city: str):
     try:
         weather_response = get(
-            f"https://api.weatherapi.com/v1/current.json?key={WEATHER_API_KEY}&q={city}&aqi=no", timeout=5)
+            f'https://api.weatherapi.com/v1/current.json?key={WEATHER_API_KEY}&q={city}&aqi=no')
         weather_response.raise_for_status()
         forecast_response = get(
             f'https://api.weatherapi.com/v1/forecast.json?key={WEATHER_API_KEY}&q={city}&days=1&aqi=no&alerts=no')
@@ -179,8 +193,8 @@ async def weather(interaction: discord.Interaction, city: str):
     """Get the current weather"""
     try:
         weather_response, forecast_response = await get_weather_json(city)
-    except Exception:
-        await interaction.response.send_message(f'Error: the city "{city}" was not found')
+    except Exception as _e:
+        await interaction.response.send_message(f'Error: the city "{city}" was not found', ephemeral=True)
         return
     current_temp = weather_response['current']['temp_c']
     forecast = forecast_response['forecast']['forecastday'][0]
@@ -190,6 +204,21 @@ async def weather(interaction: discord.Interaction, city: str):
     embed.description = f'Current temperature: {current_temp}°C\n' f'Forecast: Min: {forecast_min}°C, Max: {forecast_max}°C '
     await interaction.response.send_message(embed=embed)
 
+# A command tha tell the time until midnight
+@client.tree.command()
+async def midnight(interaction: discord.Interaction):
+    """Sends the time until midnight."""
+    paris_dt = datetime.now(ZoneInfo("Europe/Paris"))
+    midnight = paris_dt.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+    time_until_midnight = midnight - paris_dt
+    await interaction.response.send_message(f'Time until midnight: {time_until_midnight}')
+
+
+# A command that say what the best programming language is
+@client.tree.command()
+async def best_language(interaction: discord.Interaction):
+    """Sends the best programming language."""
+    await interaction.response.send_message('The best programming language is Rust')
 
 @client.tree.command()
 async def color(interaction: discord.Interaction):
@@ -211,13 +240,14 @@ def fib(n: int) -> int:
 # @client.tree.command()
 # async def fibonacci(interaction: discord.Interaction, n: int):
 #     """Sends the nth fibonacci number."""
+#     await interaction.response.send_message(f'{n}th fibonacci number is {fib(n)}')
 
 
 @client.event
 async def on_member_join(member: discord.Member):
     guild = member.guild
     channel = client.get_channel(GENERAL_CHANNEL_ID)
-    await channel.send(f"Welcome {member.mention} to {guild.name}!")
+    await channel.send(f'Welcome {member.mention} to {guild.name}!')
 
 if __name__ == "__main__":
     client.run(TOKEN)
