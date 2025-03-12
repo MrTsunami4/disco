@@ -28,11 +28,10 @@ md = tt.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
 mid = md.timetz()
 
 
-def embed_from_quote(my_quote: dict):
-    embed = discord.Embed(title="Quote")
-    embed.description = my_quote["content"]
-    embed.set_author(name=my_quote["author"])
-    return embed
+def embed_from_quote(my_quote: dict) -> discord.Embed:
+    return discord.Embed(title="Quote", description=my_quote["content"]).set_author(
+        name=my_quote["author"]
+    )
 
 
 class Dropdown(discord.ui.Select):
@@ -105,10 +104,8 @@ intents = discord.Intents.default()
 client = MyClient(client_intents=intents)
 
 
-@client.event
 async def on_ready():
-    print(f"Logged in as {client.user} (ID: {client.user.id})")
-    print("------")
+    print(f"Logged in as {client.user} (ID: {client.user.id})\n------")
 
 
 @client.tree.command()
@@ -159,36 +156,31 @@ async def show_join_date(interaction: discord.Interaction, member: discord.Membe
         ephemeral=True,
     )
 
-
-@client.tree.context_menu(name="Translate")
-async def translate(interaction: discord.Interaction, message: discord.Message):
-    await interaction.response.defer(ephemeral=True)
-    """Translate text to another language."""
-    try:
-        response = post(
-            "https://translate.argosopentech.com/translate",
-            json={"q": message.content, "source": "fr", "target": "en"},
-            timeout=30,
-        )
-        response.raise_for_status()
-    except Exception as e:
-        await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
-        return
-    try:
-        json = response.json()
-        translated_text = json["translatedText"]
-    except Exception as e:
-        await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
-        return
-    await interaction.followup.send(
-        f"Translated text: {translated_text}", ephemeral=True
-    )
+    @client.tree.context_menu(name="Translate")
+    async def translate(interaction: discord.Interaction, message: discord.Message):
+        """Translate text to another language."""
+        await interaction.response.defer(ephemeral=True)
+        try:
+            response = post(
+                "https://translate.argosopentech.com/translate",
+                json={"q": message.content, "source": "fr", "target": "en"},
+                timeout=30,
+            )
+            response.raise_for_status()
+            translated_text = response.json().get("translatedText")
+            if not translated_text:
+                raise ValueError("Translation failed")
+        except Exception as e:
+            await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
+        else:
+            await interaction.followup.send(
+                f"Translated text: {translated_text}", ephemeral=True
+            )
 
 
-@client.tree.command()
 async def quote(interaction: discord.Interaction):
-    """Sends a random quote."""
     response = get("https://api.quotable.io/random?maxLength=230")
+    response.raise_for_status()
     my_quote = response.json()
     await interaction.response.send_message(embed=embed_from_quote(my_quote))
 
@@ -196,38 +188,40 @@ async def quote(interaction: discord.Interaction):
 @cached(cache=TTLCache(maxsize=1024, ttl=600))
 async def get_weather_json(city: str):
     try:
-        weather_response = get(
-            f"https://api.weatherapi.com/v1/current.json?key={WEATHER_API_KEY}&q={city}&aqi=no"
-        )
+        weather_url = f"https://api.weatherapi.com/v1/current.json?key={WEATHER_API_KEY}&q={city}&aqi=no"
+        forecast_url = f"https://api.weatherapi.com/v1/forecast.json?key={WEATHER_API_KEY}&q={city}&days=1&aqi=no&alerts=no"
+
+        weather_response = get(weather_url)
         weather_response.raise_for_status()
-        forecast_response = get(
-            f"https://api.weatherapi.com/v1/forecast.json?key={WEATHER_API_KEY}&q={city}&days=1&aqi=no&alerts=no"
-        )
+
+        forecast_response = get(forecast_url)
         forecast_response.raise_for_status()
+
+        return weather_response.json(), forecast_response.json()
     except Exception as e:
         raise e
-    return weather_response.json(), forecast_response.json()
 
 
 @client.tree.command()
 @app_commands.describe(city="The city you want to get the weather for")
 async def weather(interaction: discord.Interaction, city: str):
-    """Get the current weather"""
     try:
         weather_response, forecast_response = await get_weather_json(city)
-    except Exception as _e:
+    except Exception:
         await interaction.response.send_message(
             f'Error: the city "{city}" was not found', ephemeral=True
         )
         return
+
     current_temp = weather_response["current"]["temp_c"]
     forecast = forecast_response["forecast"]["forecastday"][0]
     forecast_min = forecast["day"]["mintemp_c"]
     forecast_max = forecast["day"]["maxtemp_c"]
+
     embed = discord.Embed(title="Weather")
     embed.description = (
         f"Current temperature: {current_temp}°C\n"
-        f"Forecast: Min: {forecast_min}°C, Max: {forecast_max}°C "
+        f"Forecast: Min: {forecast_min}°C, Max: {forecast_max}°C"
     )
     await interaction.response.send_message(embed=embed)
 
@@ -235,12 +229,11 @@ async def weather(interaction: discord.Interaction, city: str):
 # A command tha tell the time until midnight
 @client.tree.command()
 async def midnight(interaction: discord.Interaction):
-    """Sends the time until midnight."""
-    paris_dt = datetime.now(ZoneInfo("Europe/Paris"))
-    midnight = paris_dt.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(
-        days=1
+    now = datetime.now(ZoneInfo("Europe/Paris"))
+    midnight = (now + timedelta(days=1)).replace(
+        hour=0, minute=0, second=0, microsecond=0
     )
-    time_until_midnight = midnight - paris_dt
+    time_until_midnight = midnight - now
     await interaction.response.send_message(
         f"Time until midnight: {time_until_midnight}"
     )
