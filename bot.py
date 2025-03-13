@@ -1,17 +1,16 @@
 from os import getenv
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
-from typing import Iterator, Optional
+from typing import Optional, Tuple, Dict, Any
 from dotenv import load_dotenv
 from asyncache import cached
 from cachetools import TTLCache
-from requests import get, post
+import aiohttp
 
 import discord
 from discord import app_commands
 from discord.ext import tasks
 
-from helper import nth_element
 
 load_dotenv()
 
@@ -19,13 +18,15 @@ GUILD_ID = int(getenv("GUILD_ID"))
 TOKEN = getenv("DISCORD_TOKEN")
 WEATHER_API_KEY = getenv("WEATHER_API_KEY")
 GENERAL_CHANNEL_ID = int(getenv("GENERAL_CHANNEL_ID"))
+TIMEZONE = "Europe/Paris"
 
 MY_GUILD = discord.Object(id=GUILD_ID)
 
 
-tt = datetime.now(ZoneInfo("Europe/Paris"))
-md = tt.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-mid = md.timetz()
+def get_midnight_time():
+    tt = datetime.now(ZoneInfo(TIMEZONE))
+    md = tt.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+    return md.timetz()
 
 
 def embed_from_quote(my_quote: dict) -> discord.Embed:
@@ -81,18 +82,22 @@ class MyClient(discord.Client):
     def __init__(self, *, client_intents: discord.Intents):
         super().__init__(intents=client_intents)
         self.tree = app_commands.CommandTree(self)
+        self.session = None
 
     async def setup_hook(self):
+        self.session = aiohttp.ClientSession()
         self.tree.copy_global_to(guild=MY_GUILD)
         self.quote_task.start()
         await self.tree.sync(guild=MY_GUILD)
 
-    @tasks.loop(time=mid)
+    async def close(self):
+        if self.session:
+            await self.session.close()
+        await super().close()
+
+    @tasks.loop(time=get_midnight_time())
     async def quote_task(self):
         channel = self.get_channel(GENERAL_CHANNEL_ID)
-        # response = get("https://api.quotable.io/random?maxLength=230")
-        # my_quote = response.json()
-        # await channel.send(embed=embed_from_quote(my_quote))
         await channel.send("https://www.youtube.com/watch?v=F8jlpPVeTUg")
 
     @quote_task.before_loop
@@ -104,6 +109,7 @@ intents = discord.Intents.default()
 client = MyClient(client_intents=intents)
 
 
+@client.event
 async def on_ready():
     print(f"Logged in as {client.user} (ID: {client.user.id})\n------")
 
@@ -156,90 +162,125 @@ async def show_join_date(interaction: discord.Interaction, member: discord.Membe
         ephemeral=True,
     )
 
-    @client.tree.context_menu(name="Translate")
-    async def translate(interaction: discord.Interaction, message: discord.Message):
-        """Translate text to another language."""
-        await interaction.response.defer(ephemeral=True)
-        try:
-            response = post(
-                "https://translate.argosopentech.com/translate",
-                json={"q": message.content, "source": "fr", "target": "en"},
-                timeout=30,
-            )
-            response.raise_for_status()
-            translated_text = response.json().get("translatedText")
+
+@client.tree.context_menu(name="Translate")
+async def translate(interaction: discord.Interaction, message: discord.Message):
+    """Translate text to another language."""
+    await interaction.response.defer(ephemeral=True)
+    try:
+        async with client.session.post(
+            "https://translate.argosopentech.com/translate",
+            json={"q": message.content, "source": "fr", "target": "en"},
+            timeout=30,
+        ) as response:
+            if response.status != 200:
+                raise ValueError(
+                    f"Translation request failed with status {response.status}"
+                )
+            data = await response.json()
+            translated_text = data.get("translatedText")
             if not translated_text:
                 raise ValueError("Translation failed")
-        except Exception as e:
-            await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
-        else:
-            await interaction.followup.send(
-                f"Translated text: {translated_text}", ephemeral=True
-            )
-
-
-async def quote(interaction: discord.Interaction):
-    response = get("https://api.quotable.io/random?maxLength=230")
-    response.raise_for_status()
-    my_quote = response.json()
-    await interaction.response.send_message(embed=embed_from_quote(my_quote))
-
-
-@cached(cache=TTLCache(maxsize=1024, ttl=600))
-async def get_weather_json(city: str):
-    try:
-        weather_url = f"https://api.weatherapi.com/v1/current.json?key={WEATHER_API_KEY}&q={city}&aqi=no"
-        forecast_url = f"https://api.weatherapi.com/v1/forecast.json?key={WEATHER_API_KEY}&q={city}&days=1&aqi=no&alerts=no"
-
-        weather_response = get(weather_url)
-        weather_response.raise_for_status()
-
-        forecast_response = get(forecast_url)
-        forecast_response.raise_for_status()
-
-        return weather_response.json(), forecast_response.json()
     except Exception as e:
-        raise e
+        await interaction.followup.send(f"An error occurred: {e}", ephemeral=True)
+    else:
+        await interaction.followup.send(
+            f"Translated text: {translated_text}", ephemeral=True
+        )
+
+
+@client.tree.command()
+async def quote(interaction: discord.Interaction):
+    """Sends a random quote."""
+    try:
+        async with client.session.get(
+            "https://api.quotable.io/random?maxLength=230"
+        ) as response:
+            if response.status == 200:
+                my_quote = await response.json()
+                await interaction.response.send_message(
+                    embed=embed_from_quote(my_quote)
+                )
+            else:
+                await interaction.response.send_message(
+                    "Failed to fetch a quote", ephemeral=True
+                )
+    except Exception as e:
+        await interaction.response.send_message(
+            f"An error occurred: {e}", ephemeral=True
+        )
+
+
+@cached(cache=TTLCache(maxsize=128, ttl=600))
+async def get_weather_json(city: str) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    """Get weather data for a city with caching."""
+    weather_url = f"https://api.weatherapi.com/v1/current.json?key={WEATHER_API_KEY}&q={city}&aqi=no"
+    forecast_url = f"https://api.weatherapi.com/v1/forecast.json?key={WEATHER_API_KEY}&q={city}&days=1&aqi=no&alerts=no"
+
+    try:
+        async with (
+            client.session.get(weather_url) as weather_response,
+            client.session.get(forecast_url) as forecast_response,
+        ):
+            if weather_response.status != 200 or forecast_response.status != 200:
+                raise ValueError(
+                    f"Weather API error: status codes {weather_response.status}, {forecast_response.status}"
+                )
+
+            return await weather_response.json(), await forecast_response.json()
+    except Exception as e:
+        raise ValueError(f"Failed to get weather data: {e}")
 
 
 @client.tree.command()
 @app_commands.describe(city="The city you want to get the weather for")
 async def weather(interaction: discord.Interaction, city: str):
+    """Get the current weather and forecast for a city."""
+    await interaction.response.defer()
+
     try:
         weather_response, forecast_response = await get_weather_json(city)
-    except Exception:
-        await interaction.response.send_message(
-            f'Error: the city "{city}" was not found', ephemeral=True
+
+        current_temp = weather_response["current"]["temp_c"]
+        condition = weather_response["current"]["condition"]["text"]
+        forecast = forecast_response["forecast"]["forecastday"][0]
+        forecast_min = forecast["day"]["mintemp_c"]
+        forecast_max = forecast["day"]["maxtemp_c"]
+
+        embed = discord.Embed(
+            title=f"Weather for {weather_response['location']['name']}",
+            description=(
+                f"**Current:** {current_temp}°C, {condition}\n"
+                f"**Forecast:** Min: {forecast_min}°C, Max: {forecast_max}°C"
+            ),
+            color=0x3498DB,
         )
-        return
+        embed.set_footer(text="Data from WeatherAPI.com")
 
-    current_temp = weather_response["current"]["temp_c"]
-    forecast = forecast_response["forecast"]["forecastday"][0]
-    forecast_min = forecast["day"]["mintemp_c"]
-    forecast_max = forecast["day"]["maxtemp_c"]
-
-    embed = discord.Embed(title="Weather")
-    embed.description = (
-        f"Current temperature: {current_temp}°C\n"
-        f"Forecast: Min: {forecast_min}°C, Max: {forecast_max}°C"
-    )
-    await interaction.response.send_message(embed=embed)
+        await interaction.followup.send(embed=embed)
+    except Exception as e:
+        await interaction.followup.send(
+            f'Error: Could not retrieve weather data for "{city}"\n{str(e)}',
+            ephemeral=True,
+        )
 
 
-# A command tha tell the time until midnight
 @client.tree.command()
 async def midnight(interaction: discord.Interaction):
-    now = datetime.now(ZoneInfo("Europe/Paris"))
+    """Tell the time until midnight."""
+    now = datetime.now(ZoneInfo(TIMEZONE))
     midnight = (now + timedelta(days=1)).replace(
         hour=0, minute=0, second=0, microsecond=0
     )
     time_until_midnight = midnight - now
+    hours, remainder = divmod(time_until_midnight.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+
     await interaction.response.send_message(
-        f"Time until midnight: {time_until_midnight}"
+        f"Time until midnight: {hours}h {minutes}m {seconds}s"
     )
 
 
-# A command that say what the best programming language is
 @client.tree.command()
 async def best_language(interaction: discord.Interaction):
     """Sends the best programming language."""
@@ -250,30 +291,6 @@ async def best_language(interaction: discord.Interaction):
 async def color(interaction: discord.Interaction):
     """Sends a random color."""
     await interaction.response.send_message(view=DropdownView())
-
-
-def fibo_gen() -> Iterator[int]:
-    a, b = 0, 1
-    while True:
-        yield a
-        a, b = b, a + b
-
-
-def fib(n: int) -> int:
-    return nth_element(fibo_gen(), n)
-
-
-# @client.tree.command()
-# async def fibonacci(interaction: discord.Interaction, n: int):
-#     """Sends the nth fibonacci number."""
-#     await interaction.response.send_message(f'{n}th fibonacci number is {fib(n)}')
-
-
-@client.event
-async def on_member_join(member: discord.Member):
-    guild = member.guild
-    channel = client.get_channel(GENERAL_CHANNEL_ID)
-    await channel.send(f"Welcome {member.mention} to {guild.name}!")
 
 
 if __name__ == "__main__":
