@@ -11,9 +11,12 @@ from config import TIMEZONE, WEATHER_API_KEY, WEATHER_API_BASE_URL
 def get_midnight_time():
     """Calculate the time for midnight of the next day."""
     from zoneinfo import ZoneInfo
-    tt = datetime.now(ZoneInfo(TIMEZONE))
-    md = tt.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-    return md.timetz()
+
+    current_time = datetime.now(ZoneInfo(TIMEZONE))
+    midnight = current_time.replace(
+        hour=0, minute=0, second=0, microsecond=0
+    ) + timedelta(days=1)
+    return midnight.timetz()
 
 
 def embed_from_quote(quote_data: dict) -> discord.Embed:
@@ -24,9 +27,13 @@ def embed_from_quote(quote_data: dict) -> discord.Embed:
 
 
 @cached(cache=TTLCache(maxsize=128, ttl=600))
-async def get_weather_json(session: aiohttp.ClientSession, city: str) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+async def get_weather_json(
+    session: aiohttp.ClientSession, city: str
+) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     """Get weather data for a city with caching."""
-    weather_url = f"{WEATHER_API_BASE_URL}/current.json?key={WEATHER_API_KEY}&q={city}&aqi=no"
+    weather_url = (
+        f"{WEATHER_API_BASE_URL}/current.json?key={WEATHER_API_KEY}&q={city}&aqi=no"
+    )
     forecast_url = f"{WEATHER_API_BASE_URL}/forecast.json?key={WEATHER_API_KEY}&q={city}&days=1&aqi=no&alerts=no"
 
     try:
