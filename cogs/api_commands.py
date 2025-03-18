@@ -40,7 +40,9 @@ class ApiCommands(commands.Cog):
         await interaction.response.defer()
 
         try:
-            weather_response, forecast_response = await get_weather_json(self.bot.session, city)
+            weather_response, forecast_response = await get_weather_json(
+                self.bot.session, city
+            )
 
             current_temp = weather_response["current"]["temp_c"]
             condition = weather_response["current"]["condition"]["text"]
@@ -66,7 +68,9 @@ class ApiCommands(commands.Cog):
             )
 
     @app_commands.context_menu(name="Translate")
-    async def translate(self, interaction: discord.Interaction, message: discord.Message):
+    async def translate(
+        self, interaction: discord.Interaction, message: discord.Message
+    ):
         """Translate text from French to English."""
         await interaction.response.defer(ephemeral=True)
         try:

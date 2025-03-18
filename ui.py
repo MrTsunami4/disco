@@ -1,8 +1,9 @@
 import discord
 
+
 class Dropdown(discord.ui.Select):
     """Dropdown menu for color selection."""
-    
+
     def __init__(self):
         # Set the options that will be presented inside the dropdown
         options = [
@@ -32,7 +33,7 @@ class Dropdown(discord.ui.Select):
 
 class DropdownView(discord.ui.View):
     """View that contains the dropdown menu."""
-    
+
     def __init__(self):
         super().__init__()
         self.add_item(Dropdown())

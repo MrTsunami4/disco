@@ -12,7 +12,9 @@ class UserCommands(commands.Cog):
         self.bot = bot
 
     @app_commands.context_menu(name="Show Message Count")
-    async def show_message_count(self, interaction: discord.Interaction, member: discord.Member):
+    async def show_message_count(
+        self, interaction: discord.Interaction, member: discord.Member
+    ):
         """Show the number of messages sent by a user on the server."""
         await interaction.response.defer(ephemeral=True)
 
