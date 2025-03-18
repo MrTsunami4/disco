@@ -9,25 +9,25 @@ from utils import get_midnight_time
 
 class DiscoBot(commands.Bot):
     """Main Discord bot class with improved organization."""
-    
+
     def __init__(self):
         intents = discord.Intents.default()
-        super().__init__(command_prefix="!", intents=intents)
+        super().__init__(intents=intents)
         self.session = None
-        
+
         # Initialize guild object
         config.MY_GUILD = discord.Object(id=config.GUILD_ID)
 
     async def setup_hook(self):
         """Sets up the bot with required configurations."""
         self.session = aiohttp.ClientSession()
-        
+
         # Start scheduled tasks
         self.midnight_task.start()
-        
+
         # Load all cogs
         await self.load_extensions()
-        
+
         # Sync application commands
         await self.tree.sync(guild=config.MY_GUILD)
 
