@@ -29,21 +29,22 @@ GENERAL_CHANNEL_ID=your_channel_id
 WEATHER_API_KEY=your_weather_api_key
 ```
 
-2. Install dependencies:
+2. Install [uv](https://docs.astral.sh/uv/)
 
 ```bash
-pip install -r requirements.txt
+curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
 3. Run the bot:
 
 ```bash
-python bot.py
+uv run bot.py
 ```
 
 ## Commands
 
 ### Basic Commands
+
 - `/hello`: Says hello
 - `/add`: Adds two numbers
 - `/send`: Sends text to the channel
@@ -53,18 +54,20 @@ python bot.py
 - `/best_language`: Shows the best programming language
 
 ### API Commands
+
 - `/quote`: Shows a random quote
 - `/weather`: Shows weather for a specified city
 - Context menu `Translate`: Translates a message from French to English
 
 ### User Commands
+
 - Context menu `Show Message Count`: Shows how many messages a user has sent
 
 ## Service Installation
 
 To run as a system service:
 
-1. Edit `disco.service` to point to the correct directories 
+1. Edit `disco.service` to point to the correct directories
 2. Copy to systemd:
 
 ```bash
