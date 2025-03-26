@@ -12,7 +12,7 @@ class DiscoBot(commands.Bot):
 
     def __init__(self):
         intents = Intents.default()
-        super().__init__(intents=intents)
+        super().__init__(command_prefix="!", intents=intents)
 
         # Initialize guild object
         config.MY_GUILD = Object(id=config.GUILD_ID)
