@@ -1,5 +1,5 @@
 from os import listdir
-from discord import Intents, Object
+from discord import Intents
 from discord.ext import commands, tasks
 
 
@@ -12,10 +12,7 @@ class DiscoBot(commands.Bot):
 
     def __init__(self):
         intents = Intents.default()
-        super().__init__(command_prefix="!", intents=intents)
-
-        # Initialize guild object
-        config.MY_GUILD = Object(id=config.GUILD_ID)
+        super().__init__(command_prefix=config.PREFIX, intents=intents)
 
     async def setup_hook(self):
         """Sets up the bot with required configurations."""
@@ -27,6 +24,7 @@ class DiscoBot(commands.Bot):
         await self.load_extensions()
 
         # Sync application commands
+        self.tree.copy_global_to(guild=config.MY_GUILD)
         await self.tree.sync(guild=config.MY_GUILD)
 
     async def load_extensions(self):
@@ -39,12 +37,6 @@ class DiscoBot(commands.Bot):
                     print(f"Loaded extension: {extension}")
                 except Exception as e:
                     print(f"Failed to load extension {extension}: {e}")
-
-    async def close(self):
-        """Clean up resources when closing the bot."""
-        if self.session:
-            await self.session.close()
-        await super().close()
 
     @tasks.loop(time=get_midnight_time())
     async def midnight_task(self):

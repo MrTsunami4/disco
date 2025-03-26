@@ -9,8 +9,12 @@ class UserCommands(Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.ctx_menu = app_commands.ContextMenu(
+            name="Show Message Count",
+            callback=self.show_message_count,
+        )
+        self.bot.tree.add_command(self.ctx_menu)
 
-    @app_commands.context_menu(name="Show Message Count")
     async def show_message_count(self, interaction: Interaction, member: Member):
         """Show the number of messages sent by a user on the server."""
         await interaction.response.defer(ephemeral=True)
