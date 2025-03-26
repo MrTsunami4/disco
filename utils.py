@@ -2,8 +2,11 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, Tuple
 from asyncache import cached
 from cachetools import TTLCache
-import discord
-import aiohttp
+from discord import Embed, Member, Object, TextChannel
+from discord.errors import Forbidden
+from requests import get
+from requests.exceptions import RequestException
+
 
 from config import TIMEZONE, WEATHER_API_KEY, WEATHER_API_BASE_URL
 
@@ -19,35 +22,31 @@ def get_midnight_time():
     return midnight.timetz()
 
 
-def embed_from_quote(quote_data: dict) -> discord.Embed:
+def embed_from_quote(quote_data: dict) -> Embed:
     """Create a Discord embed from quote data."""
-    return discord.Embed(title="Quote", description=quote_data["content"]).set_author(
+    return Embed(title="Quote", description=quote_data["content"]).set_author(
         name=quote_data["author"]
     )
 
 
 @cached(cache=TTLCache(maxsize=128, ttl=600))
-async def get_weather_json(
-    session: aiohttp.ClientSession, city: str
-) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+def get_weather_json(city: str) -> Tuple[Dict[str, Any], Dict[str, Any]]:
     """Get weather data for a city with caching."""
+
     weather_url = (
         f"{WEATHER_API_BASE_URL}/current.json?key={WEATHER_API_KEY}&q={city}&aqi=no"
     )
     forecast_url = f"{WEATHER_API_BASE_URL}/forecast.json?key={WEATHER_API_KEY}&q={city}&days=1&aqi=no&alerts=no"
 
     try:
-        async with (
-            session.get(weather_url) as weather_response,
-            session.get(forecast_url) as forecast_response,
-        ):
-            if weather_response.status != 200 or forecast_response.status != 200:
-                raise ValueError(
-                    f"Weather API error: status codes {weather_response.status}, {forecast_response.status}"
-                )
+        weather_response = get(weather_url)
+        weather_response.raise_for_status()
 
-            return await weather_response.json(), await forecast_response.json()
-    except Exception as e:
+        forecast_response = get(forecast_url)
+        forecast_response.raise_for_status()
+
+        return weather_response.json(), forecast_response.json()
+    except RequestException as e:
         raise ValueError(f"Failed to get weather data: {e}")
 
 
@@ -55,8 +54,8 @@ async def get_weather_json(
 async def count_user_messages(
     guild_id: int,
     user_id: int,
-    channels: list[discord.TextChannel],
-    guild_me: discord.Member,
+    channels: list[TextChannel],
+    guild_me: Member,
 ) -> int:
     """Count the number of messages from a user in a guild with caching."""
     message_count = 0
@@ -66,11 +65,11 @@ async def count_user_messages(
             continue
 
         try:
-            async for _ in channel.history(limit=None, user=discord.Object(id=user_id)):
+            async for _ in channel.history(limit=None, user=Object(id=user_id)):
                 message_count += 1
-        except (discord.errors.Forbidden, Exception) as e:
+        except (Forbidden, Exception) as e:
             # Ignore permission errors and other exceptions
-            if not isinstance(e, discord.errors.Forbidden):
+            if not isinstance(e, Forbidden):
                 print(f"Error counting messages in {channel.name}: {e}")
 
     return message_count

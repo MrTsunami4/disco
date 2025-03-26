@@ -1,7 +1,7 @@
-import discord
+from os import listdir
+from discord import Intents, Object
 from discord.ext import commands, tasks
-import aiohttp
-import os
+
 
 import config
 from utils import get_midnight_time
@@ -11,16 +11,14 @@ class DiscoBot(commands.Bot):
     """Main Discord bot class with improved organization."""
 
     def __init__(self):
-        intents = discord.Intents.default()
+        intents = Intents.default()
         super().__init__(intents=intents)
-        self.session = None
 
         # Initialize guild object
-        config.MY_GUILD = discord.Object(id=config.GUILD_ID)
+        config.MY_GUILD = Object(id=config.GUILD_ID)
 
     async def setup_hook(self):
         """Sets up the bot with required configurations."""
-        self.session = aiohttp.ClientSession()
 
         # Start scheduled tasks
         self.midnight_task.start()
@@ -33,7 +31,7 @@ class DiscoBot(commands.Bot):
 
     async def load_extensions(self):
         """Load all cog extensions."""
-        for filename in os.listdir("./cogs"):
+        for filename in listdir("./cogs"):
             if filename.endswith(".py"):
                 extension = f"cogs.{filename[:-3]}"
                 try:

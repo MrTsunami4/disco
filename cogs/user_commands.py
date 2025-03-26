@@ -1,20 +1,17 @@
-import discord
-from discord import app_commands
-from discord.ext import commands
+from discord import app_commands, Interaction, Member
+from discord.ext.commands import Cog
 
 from utils import count_user_messages
 
 
-class UserCommands(commands.Cog):
+class UserCommands(Cog):
     """Commands related to Discord users."""
 
     def __init__(self, bot):
         self.bot = bot
 
     @app_commands.context_menu(name="Show Message Count")
-    async def show_message_count(
-        self, interaction: discord.Interaction, member: discord.Member
-    ):
+    async def show_message_count(self, interaction: Interaction, member: Member):
         """Show the number of messages sent by a user on the server."""
         await interaction.response.defer(ephemeral=True)
 

@@ -1,19 +1,18 @@
-import discord
-from discord import app_commands
-from discord.ext import commands
+from discord import Embed, Interaction, Message, app_commands
+from discord.ext.commands import Cog
 
 from config import QUOTE_API_URL, TRANSLATE_API_URL
 from utils import embed_from_quote, get_weather_json
 
 
-class ApiCommands(commands.Cog):
+class ApiCommands(Cog):
     """Commands that interact with external APIs."""
 
     def __init__(self, bot):
         self.bot = bot
 
     @app_commands.command()
-    async def quote(self, interaction: discord.Interaction):
+    async def quote(self, interaction: Interaction):
         """Sends a random quote."""
         try:
             async with self.bot.session.get(
@@ -35,7 +34,7 @@ class ApiCommands(commands.Cog):
 
     @app_commands.command()
     @app_commands.describe(city="The city you want to get the weather for")
-    async def weather(self, interaction: discord.Interaction, city: str):
+    async def weather(self, interaction: Interaction, city: str):
         """Get the current weather and forecast for a city."""
         await interaction.response.defer()
 
@@ -50,7 +49,7 @@ class ApiCommands(commands.Cog):
             forecast_min = forecast["day"]["mintemp_c"]
             forecast_max = forecast["day"]["maxtemp_c"]
 
-            embed = discord.Embed(
+            embed = Embed(
                 title=f"Weather for {weather_response['location']['name']}",
                 description=(
                     f"**Current:** {current_temp}°C, {condition}\n"
@@ -68,9 +67,7 @@ class ApiCommands(commands.Cog):
             )
 
     @app_commands.context_menu(name="Translate")
-    async def translate(
-        self, interaction: discord.Interaction, message: discord.Message
-    ):
+    async def translate(self, interaction: Interaction, message: Message):
         """Translate text from French to English."""
         await interaction.response.defer(ephemeral=True)
         try:

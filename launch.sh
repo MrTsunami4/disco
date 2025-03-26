@@ -3,5 +3,5 @@
 git pull --depth=1
 
 source .venv/bin/activate
-pip install -r requirements.txt
+uv pip install -e .
 python bot.py
