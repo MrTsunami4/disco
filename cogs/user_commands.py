@@ -21,10 +21,8 @@ class UserCommands(Cog):
 
         try:
             message_count = await count_user_messages(
-                interaction.guild.id,
+                interaction.guild,
                 member.id,
-                interaction.guild.text_channels,
-                interaction.guild.me,
             )
             await interaction.followup.send(
                 f"{member.display_name} has sent {message_count} messages on this server.",

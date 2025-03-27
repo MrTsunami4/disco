@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, Tuple
 from asyncache import cached
 from cachetools import TTLCache
-from discord import Embed, Member, Object, TextChannel
+from discord import Embed, Guild
 from discord.errors import Forbidden
 from requests import get
 from requests.exceptions import RequestException
@@ -52,21 +52,23 @@ def get_weather_json(city: str) -> Tuple[Dict[str, Any], Dict[str, Any]]:
 
 @cached(cache=TTLCache(maxsize=200, ttl=86400))  # Cache for 1 day
 async def count_user_messages(
-    guild_id: int,
+    guild: Guild,
     user_id: int,
-    channels: list[TextChannel],
-    guild_me: Member,
 ) -> int:
     """Count the number of messages from a user in a guild with caching."""
     message_count = 0
+
+    channels = guild.text_channels
+    guild_me = guild.me
 
     for channel in channels:
         if not channel.permissions_for(guild_me).read_message_history:
             continue
 
         try:
-            async for _ in channel.history(limit=None, user=Object(id=user_id)):
-                message_count += 1
+            async for message in channel.history(limit=None):
+                if message.author.id == user_id:
+                    message_count += 1
         except (Forbidden, Exception) as e:
             # Ignore permission errors and other exceptions
             if not isinstance(e, Forbidden):
