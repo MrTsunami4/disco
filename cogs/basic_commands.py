@@ -55,7 +55,8 @@ class BasicCommands(Cog):
         """Says when a member joined."""
         member = member or interaction.user
         await interaction.response.send_message(
-            f"{member} joined {format_dt(member.joined_at)}",
+            f"{member.mention} joined {format_dt(member.joined_at)},",
+            silent=True,
         )
 
     @app_commands.command()
@@ -81,7 +82,8 @@ class BasicCommands(Cog):
     async def show_join_date(self, interaction: Interaction, member: Member):
         """Context menu to show when a member joined."""
         await interaction.response.send_message(
-            f"{member} joined at {format_dt(member.joined_at)}",
+            f"{member.mention} joined at {format_dt(member.joined_at)}",
+            silent=True,
         )
 
 

@@ -25,7 +25,8 @@ class UserCommands(Cog):
                 member.id,
             )
             await interaction.followup.send(
-                f"{member.display_name} has sent {message_count} messages in the last 24 hours.",
+                f"{member.mention} has sent {message_count} messages in the last 24 hours.",
+                silent=True,
             )
         except Exception as e:
             await interaction.followup.send(
