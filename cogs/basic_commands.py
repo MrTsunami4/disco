@@ -56,7 +56,6 @@ class BasicCommands(Cog):
         member = member or interaction.user
         await interaction.response.send_message(
             f"{member} joined {format_dt(member.joined_at)}",
-            ephemeral=True,
         )
 
     @app_commands.command()
@@ -83,7 +82,6 @@ class BasicCommands(Cog):
         """Context menu to show when a member joined."""
         await interaction.response.send_message(
             f"{member} joined at {format_dt(member.joined_at)}",
-            ephemeral=True,
         )
 
 

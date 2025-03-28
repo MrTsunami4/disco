@@ -50,13 +50,15 @@ def get_weather_json(city: str) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         raise ValueError(f"Failed to get weather data: {e}")
 
 
-@cached(cache=TTLCache(maxsize=200, ttl=86400))  # Cache for 1 day
-async def count_user_messages(
+@cached(cache=TTLCache(maxsize=200, ttl=3600))  # Cache for 1 hour
+async def count_user_messages_in_last_24_hours(
     guild: Guild,
     user_id: int,
 ) -> int:
     """Count the number of messages from a user in a guild with caching."""
     message_count = 0
+
+    twenty_four_hours_ago = datetime.now() - timedelta(days=1)
 
     channels = guild.text_channels
     guild_me = guild.me
@@ -66,7 +68,9 @@ async def count_user_messages(
             continue
 
         try:
-            async for message in channel.history(limit=None):
+            async for message in channel.history(
+                limit=None, after=twenty_four_hours_ago
+            ):
                 if message.author.id == user_id:
                     message_count += 1
         except (Forbidden, Exception) as e:

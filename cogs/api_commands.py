@@ -20,20 +20,24 @@ class ApiCommands(Cog):
     @app_commands.command()
     async def quote(self, interaction: Interaction):
         """Sends a random quote."""
+        await interaction.response.defer(ephemeral=True)
+
         try:
             response = get(f"{QUOTE_API_URL}?maxLength=230")
             response.raise_for_status()
             my_quote = await response.json()
-            await interaction.response.send_message(embed=embed_from_quote(my_quote))
+            await interaction.followup.send(embed=embed_from_quote(my_quote))
 
         except RequestException as e:
-            await interaction.response.send_message(f"Failed to get a quote: {e}")
+            await interaction.response.send_message(
+                f"Failed to get a quote: {e}", ephemeral=True
+            )
 
     @app_commands.command()
     @app_commands.describe(city="The city you want to get the weather for")
     async def weather(self, interaction: Interaction, city: str):
         """Get the current weather and forecast for a city."""
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
 
         try:
             weather_response, forecast_response = get_weather_json(city)
@@ -73,7 +77,7 @@ class ApiCommands(Cog):
             translated_text = data.get("translatedText")
             if not translated_text:
                 raise ValueError("Translation failed")
-            await interaction.followup.send(translated_text, ephemeral=True)
+            await interaction.followup.send(translated_text)
         except RequestException as e:
             await interaction.followup.send(
                 f"Failed to translate text: {e}", ephemeral=True
