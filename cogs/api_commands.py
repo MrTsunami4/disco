@@ -37,7 +37,7 @@ class ApiCommands(Cog):
     @app_commands.describe(city="The city you want to get the weather for")
     async def weather(self, interaction: Interaction, city: str):
         """Get the current weather and forecast for a city."""
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer()
 
         try:
             weather_response, forecast_response = get_weather_json(city)
@@ -65,7 +65,7 @@ class ApiCommands(Cog):
 
     async def translate(self, interaction: Interaction, message: Message):
         """Translate text from French to English."""
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer()
         try:
             response = post(
                 TRANSLATE_API_URL,

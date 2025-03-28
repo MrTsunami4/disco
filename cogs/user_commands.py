@@ -17,7 +17,7 @@ class UserCommands(Cog):
 
     async def show_message_count(self, interaction: Interaction, member: Member):
         """Show the number of messages sent by a user on the server in the last 24 hours"""
-        await interaction.response.defer(ephemeral=True)
+        await interaction.response.defer()
 
         try:
             message_count = await count_user_messages_in_last_24_hours(
