@@ -8,6 +8,7 @@ on:
 jobs:
   restart-service:
     runs-on: ubuntu-latest
+    environment: Deploy
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
