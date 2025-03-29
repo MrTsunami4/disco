@@ -17,8 +17,7 @@ jobs:
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
-          port: $${ secrets.PORT }}
+          port: ${{ secrets.PORT }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           username: ${{ secrets.USERNAME }}
-          script: |
-            sudo systemctl restart disco.service
+          script: sudo systemctl restart disco.service
