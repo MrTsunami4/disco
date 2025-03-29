@@ -10,9 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     environment: Deploy
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
       - name: Restart Disco Service
         uses: appleboy/ssh-action@master
         with:
@@ -20,4 +17,4 @@ jobs:
           port: ${{ secrets.PORT }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           username: ${{ secrets.USERNAME }}
-          script: sudo systemctl restart disco.service
+          script: systemctl restart disco.service
