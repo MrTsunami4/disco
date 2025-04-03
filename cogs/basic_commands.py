@@ -4,7 +4,6 @@ from zoneinfo import ZoneInfo
 from discord import Interaction, Member, app_commands
 from discord.utils import format_dt
 from discord.ext.commands import Cog
-from discord.ext import commands
 
 from ui import DropdownView
 from config import TIMEZONE
@@ -37,7 +36,7 @@ class BasicCommands(Cog):
             f"{first_value} + {second_value} = {first_value + second_value}"
         )
 
-    @commands.command()
+    @app_commands.command()
     async def send(self, interaction: Interaction, text_to_send: str):
         """Sends the text into the current channel."""
         await interaction.response.send_message(text_to_send)
