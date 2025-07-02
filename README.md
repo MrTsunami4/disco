@@ -77,6 +77,12 @@ sudo systemctl enable disco.service
 sudo systemctl start disco.service
 ```
 
+To restart the service:
+
+```bash
+sudo systemctl restart disco.service
+```
+
 ## Adding New Commands
 
 To add new commands, create a new Python file in the `cogs` directory following the pattern of existing cogs, then restart the bot.
