@@ -43,7 +43,7 @@ class DiscoBot(commands.Bot):
         """Task that runs at midnight."""
         channel = self.get_channel(config.GENERAL_CHANNEL_ID)
         if channel:
-            await channel.send("https://www.youtube.com/watch?v=F8jlpPVeTUg")
+            await channel.send("https://www.youtube.com/watch?v=aES3XaSD9wc")
 
     @midnight_task.before_loop
     async def before_midnight_task(self):
