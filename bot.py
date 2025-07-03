@@ -50,19 +50,7 @@ class DiscoBot(commands.Bot):
         """Wait until the bot is ready before starting the task."""
         await self.wait_until_ready()
 
-    @app_commands.command()
-    @app_commands.check(is_admin)
-    async def reload_extensions(self, interaction: Interaction):
-        """Reload all cog extensions."""
-        for filename in listdir("./cogs"):
-            if filename.endswith(".py"):
-                extension = f"cogs.{filename[:-3]}"
-                try:
-                    await self.reload_extension(extension)
-                    print(f"Reloaded extension: {extension}")
-                except Exception as e:
-                    print(f"Failed to reload extension {extension}: {e}")
-        await interaction.response.send_message("All extensions reloaded successfully.", ephemeral=True)
+
 
 bot = DiscoBot()
 
