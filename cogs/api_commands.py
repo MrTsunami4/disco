@@ -11,11 +11,11 @@ class ApiCommands(Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.ctx_menu = app_commands.ContextMenu(
-            name="Translate",
-            callback=self.translate,
-        )
-        self.bot.tree.add_command(self.ctx_menu)
+        # self.ctx_menu = app_commands.ContextMenu(
+        #     name="Translate",
+        #     callback=self.translate,
+        # )
+        # self.bot.tree.add_command(self.ctx_menu)
 
     # @app_commands.command()
     # async def quote(self, interaction: Interaction):
