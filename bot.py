@@ -4,7 +4,7 @@ from discord.ext import commands, tasks
 
 
 import config
-from utils import get_midnight_time
+from utils import get_midnight_time, is_admin
 
 
 class DiscoBot(commands.Bot):
@@ -51,6 +51,7 @@ class DiscoBot(commands.Bot):
         await self.wait_until_ready()
 
     @app_commands.command()
+    @app_commands.check(is_admin)
     async def reload_extensions(self):
         """Reload all cog extensions."""
         for filename in listdir("./cogs"):

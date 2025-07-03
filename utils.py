@@ -8,7 +8,7 @@ from requests import get
 from requests.exceptions import RequestException
 
 
-from config import TIMEZONE, WEATHER_API_KEY, WEATHER_API_BASE_URL
+from config import ADMIN_ID, TIMEZONE, WEATHER_API_KEY, WEATHER_API_BASE_URL
 
 
 def get_midnight_time():
@@ -79,3 +79,8 @@ async def count_user_messages_in_last_24_hours(
                 print(f"Error counting messages in {channel.name}: {e}")
 
     return message_count
+
+
+def is_admin(user_id: int) -> bool:
+    """Check if a user is an admin."""
+    return user_id == ADMIN_ID

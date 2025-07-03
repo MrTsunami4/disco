@@ -11,6 +11,7 @@ WEATHER_API_KEY = getenv("WEATHER_API_KEY")
 GENERAL_CHANNEL_ID = int(getenv("GENERAL_CHANNEL_ID"))
 TIMEZONE = "Europe/Paris"
 PREFIX = "%"
+ADMIN_ID = int(getenv("ADMIN_ID"))
 
 # API endpoints
 QUOTE_API_URL = "https://api.quotable.io/random"
