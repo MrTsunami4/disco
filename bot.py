@@ -51,7 +51,6 @@ class DiscoBot(commands.Bot):
         await self.wait_until_ready()
 
     @app_commands.command()
-    @app_commands.describe("Reload all cog extensions")
     @app_commands.check(is_admin)
     async def reload_extensions(self, interaction: Interaction):
         """Reload all cog extensions."""
