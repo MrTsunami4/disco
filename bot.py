@@ -50,7 +50,7 @@ class DiscoBot(commands.Bot):
         """Wait until the bot is ready before starting the task."""
         await self.wait_until_ready()
 
-    @app_commands.command()
+    @app_commands.command(name="reload_extensions", description="Reload all cog extensions.")
     @app_commands.check(is_admin)
     async def reload_extensions(self):
         """Reload all cog extensions."""
