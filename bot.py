@@ -1,5 +1,5 @@
 from os import listdir
-from discord import Intents, app_commands
+from discord import Intents, app_commands, Interaction
 from discord.ext import commands, tasks
 
 
@@ -50,9 +50,10 @@ class DiscoBot(commands.Bot):
         """Wait until the bot is ready before starting the task."""
         await self.wait_until_ready()
 
-    @app_commands.command(name="reload_extensions", description="Reload all cog extensions.")
+    @app_commands.command()
+    @app_commands.describe("Reload all cog extensions")
     @app_commands.check(is_admin)
-    async def reload_extensions(self):
+    async def reload_extensions(self, interaction: Interaction):
         """Reload all cog extensions."""
         for filename in listdir("./cogs"):
             if filename.endswith(".py"):
@@ -62,7 +63,7 @@ class DiscoBot(commands.Bot):
                     print(f"Reloaded extension: {extension}")
                 except Exception as e:
                     print(f"Failed to reload extension {extension}: {e}")
-
+        await interaction.response.send_message("All extensions reloaded successfully.", ephemeral=True)
 
 bot = DiscoBot()
 
