@@ -1,10 +1,10 @@
 from os import listdir
-from discord import Intents, app_commands, Interaction
+from discord import Intents
 from discord.ext import commands, tasks
 
 
 import config
-from utils import get_midnight_time, is_admin
+from utils import midnight_without_delay, one_min_before_midnight
 
 
 class DiscoBot(commands.Bot):
@@ -38,7 +38,14 @@ class DiscoBot(commands.Bot):
                 except Exception as e:
                     print(f"Failed to load extension {extension}: {e}")
 
-    @tasks.loop(time=get_midnight_time())
+    @tasks.loop(time=one_min_before_midnight())
+    async def one_min_before_midnight_task(self):
+        """Task that runs one minute before midnight."""
+        channel = self.get_channel(config.GENERAL_CHANNEL_ID)
+        if channel:
+            await channel.send("Get ready! Midnight is coming in 1 minute!")
+
+    @tasks.loop(time=midnight_without_delay())
     async def midnight_task(self):
         """Task that runs at midnight."""
         channel = self.get_channel(config.GENERAL_CHANNEL_ID)

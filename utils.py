@@ -6,6 +6,7 @@ from discord import Embed, Guild
 from discord.errors import Forbidden
 from requests import get
 from requests.exceptions import RequestException
+from discord.utils import utcnow, time_snowflake, snowflake_time
 
 
 from config import ADMIN_ID, TIMEZONE, WEATHER_API_KEY, WEATHER_API_BASE_URL
@@ -19,7 +20,7 @@ def get_midnight_time():
     midnight = current_time.replace(
         hour=0, minute=0, second=0, microsecond=0
     ) + timedelta(days=1)
-    return midnight.timetz()
+    return midnight
 
 
 def embed_from_quote(quote_data: dict) -> Embed:
@@ -84,3 +85,19 @@ async def count_user_messages_in_last_24_hours(
 def is_admin(user_id: int) -> bool:
     """Check if a user is an admin."""
     return user_id == ADMIN_ID
+
+def get_server_delay() -> float:
+    """Get the current server delay in seconds."""
+    return utcnow().timestamp() - snowflake_time(time_snowflake(utcnow())).timestamp()
+
+@cached(cache=TTLCache(maxsize=1, ttl=3600))  # Cache for 1 hour
+def midnight_without_delay():
+    delay = get_server_delay()
+    midnight = get_midnight_time()
+    midnight_corrected = midnight - timedelta(seconds=delay)
+    return midnight_corrected.timetz()
+
+def one_min_before_midnight():
+    midnight = get_midnight_time()
+    one_min_before_midnight = midnight - timedelta(minutes=1)
+    return one_min_before_midnight.timetz()
