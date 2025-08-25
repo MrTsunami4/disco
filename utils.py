@@ -11,7 +11,7 @@ from discord.utils import utcnow, time_snowflake, snowflake_time
 
 from config import ADMIN_ID, TIMEZONE, WEATHER_API_KEY, WEATHER_API_BASE_URL
 
-midnight:datetime = None
+midnight = (datetime.min + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
 delay:float = None
 
 def get_midnight_time():
@@ -23,7 +23,7 @@ def get_midnight_time():
     midnight = current_time.replace(
         hour=0, minute=0, second=0, microsecond=0
     ) + timedelta(days=1)
-    
+    return midnight.timetz()
 
 
 def embed_from_quote(quote_data: dict) -> Embed:
