@@ -11,16 +11,19 @@ from discord.utils import utcnow, time_snowflake, snowflake_time
 
 from config import ADMIN_ID, TIMEZONE, WEATHER_API_KEY, WEATHER_API_BASE_URL
 
+midnight:datetime = None
+delay:float = None
 
 def get_midnight_time():
     """Calculate the time for midnight of the next day."""
     from zoneinfo import ZoneInfo
+    global midnight
 
     current_time = datetime.now(ZoneInfo(TIMEZONE))
     midnight = current_time.replace(
         hour=0, minute=0, second=0, microsecond=0
     ) + timedelta(days=1)
-    return midnight
+    
 
 
 def embed_from_quote(quote_data: dict) -> Embed:
@@ -86,18 +89,19 @@ def is_admin(user_id: int) -> bool:
     """Check if a user is an admin."""
     return user_id == ADMIN_ID
 
-def get_server_delay() -> float:
+def get_server_delay():
     """Get the current server delay in seconds."""
-    return utcnow().timestamp() - snowflake_time(time_snowflake(utcnow())).timestamp()
+    global delay
+    delay = utcnow().timestamp() - snowflake_time(time_snowflake(utcnow())).timestamp()
 
-@cached(cache=TTLCache(maxsize=1, ttl=3600))  # Cache for 1 hour
 def midnight_without_delay():
-    delay = get_server_delay()
-    midnight = get_midnight_time()
     midnight_corrected = midnight - timedelta(seconds=delay)
     return midnight_corrected.timetz()
 
 def one_min_before_midnight():
-    midnight = get_midnight_time()
     one_min_before_midnight = midnight - timedelta(minutes=1)
     return one_min_before_midnight.timetz()
+
+def ten_pm_time():
+    ten_pm = midnight - timedelta(hours=2)
+    return ten_pm.timetz()
