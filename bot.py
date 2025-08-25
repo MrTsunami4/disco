@@ -4,7 +4,7 @@ from discord.ext import commands, tasks
 
 
 import config
-from utils import get_midnight_time, get_server_delay, midnight_without_delay, one_min_before_midnight, ten_pm_time
+from utils import get_midnight_time, get_server_delay, midnight_without_delay, one_min_before_midnight, ten_pm_time, midnight
 
 
 class DiscoBot(commands.Bot):
@@ -17,8 +17,13 @@ class DiscoBot(commands.Bot):
     async def setup_hook(self):
         """Sets up the bot with required configurations."""
 
+        if midnight is None:
+            get_midnight_time()
+
         # Start scheduled tasks
         self.midnight_task.start()
+        self.one_min_before_midnight_task.start()
+        self.ten_pm_task.start()
 
         # Load all cogs
         await self.load_extensions()
