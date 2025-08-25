@@ -12,7 +12,7 @@ from discord.utils import utcnow, time_snowflake, snowflake_time
 from config import ADMIN_ID, TIMEZONE, WEATHER_API_KEY, WEATHER_API_BASE_URL
 
 midnight = (datetime.min + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-delay:float = None
+delay:float = 0.0  # in seconds
 
 def get_midnight_time():
     """Calculate the time for midnight of the next day."""
