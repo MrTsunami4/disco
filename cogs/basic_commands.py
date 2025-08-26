@@ -76,7 +76,7 @@ class BasicCommands(Cog):
         await interaction.response.send_message(f"Pong! {round(self.bot.latency * 1000)}ms")
 
     @app_commands.command()
-    async def mid_night_without_delay(self, interaction: Interaction):
+    async def midnight_without_delay(self, interaction: Interaction):
         """Sends the time until midnight without delay."""
         now = datetime.now(ZoneInfo(TIMEZONE)) - timedelta(seconds=self.bot.latency)
         time_until_midnight = get_midnight_time_aware() - now
