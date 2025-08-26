@@ -38,7 +38,7 @@ class DiscoBot(commands.Bot):
                     print(f"Failed to load extension {extension}: {e}")
 
 
-    @tasks.loop(time=BasicCommands.get_midnight_time_corrected(BasicCommands))
+    @tasks.loop(time=BasicCommands.get_midnight_time_corrected())
     async def midnight_task(self):
         """Task that runs at midnight."""
         channel = self.get_channel(config.GENERAL_CHANNEL_ID)
