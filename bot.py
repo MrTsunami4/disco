@@ -4,8 +4,7 @@ from discord.ext import commands, tasks
 
 
 import config
-from utils import get_midnight_time
-
+from cogs.basic_commands import BasicCommands
 
 class DiscoBot(commands.Bot):
     """Main Discord bot class with improved organization."""
@@ -39,7 +38,7 @@ class DiscoBot(commands.Bot):
                     print(f"Failed to load extension {extension}: {e}")
 
 
-    @tasks.loop(time=get_midnight_time())
+    @tasks.loop(time=BasicCommands.get_midnight_time_corrected())
     async def midnight_task(self):
         """Task that runs at midnight."""
         channel = self.get_channel(config.GENERAL_CHANNEL_ID)

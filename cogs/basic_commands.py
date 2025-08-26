@@ -2,12 +2,12 @@ from typing import Optional
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from discord import Interaction, Member, app_commands
-from discord.utils import format_dt, utcnow, time_snowflake, snowflake_time
+from discord.utils import format_dt
 from discord.ext.commands import Cog
 
 from ui import DropdownView
 from config import TIMEZONE
-from utils import get_midnight_time, get_midnight_time_aware
+from utils import get_midnight_time_aware
 
 class BasicCommands(Cog):
     """Basic bot commands."""
@@ -19,6 +19,12 @@ class BasicCommands(Cog):
             callback=self.show_join_date,
         )
         self.bot.tree.add_command(self.ctx_menu)
+
+    def get_midnight_time_corrected(self):
+        """Calculate the time for midnight of the minus the bot latency."""
+        now = datetime.now(ZoneInfo(TIMEZONE)) - timedelta(seconds=self.bot.latency)
+        midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+        return midnight.timetz()
 
     @app_commands.command()
     async def hello(self, interaction: Interaction):
