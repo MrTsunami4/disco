@@ -9,7 +9,7 @@ from requests.exceptions import RequestException
 
 
 from config import ADMIN_ID, TIMEZONE, WEATHER_API_KEY, WEATHER_API_BASE_URL
-from bot import bot
+import bot  # Import bot instance for latency access
 
 def get_midnight_time():
     """Calculate the time for midnight of the next day."""
