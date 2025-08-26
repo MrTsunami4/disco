@@ -11,15 +11,6 @@ from requests.exceptions import RequestException
 from config import ADMIN_ID, TIMEZONE, WEATHER_API_KEY, WEATHER_API_BASE_URL
 
 def get_midnight_time():
-    """Calculate the time for midnight of the next day."""
-    from zoneinfo import ZoneInfo
-
-    now = datetime.now(ZoneInfo(TIMEZONE))
-    midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-    return midnight.timetz()
-
-
-def get_midnight_time_aware():
     """Get the next midnight time as a timezone-aware datetime object."""
     from zoneinfo import ZoneInfo
 
@@ -27,12 +18,10 @@ def get_midnight_time_aware():
     midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
     return midnight
 
+
 def get_midnight_time_corrected(bot_instance):
     """Calculate the time for midnight of the next day minus the bot latency."""
-    from zoneinfo import ZoneInfo
-
-    now = datetime.now(ZoneInfo(TIMEZONE)) - timedelta(seconds=bot_instance.latency)
-    midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+    midnight = get_midnight_time() - timedelta(seconds=bot_instance.latency)
     return midnight
 
 def embed_from_quote(quote_data: dict) -> Embed:
