@@ -76,7 +76,7 @@ class BasicCommands(Cog):
         """Tell the time until midnight without delay."""
         now = datetime.now(ZoneInfo(TIMEZONE))
         midnight_corrected = midnight_without_delay_aware()
-        time_until_midnight = datetime.combine(now.date() + timedelta(days=1), midnight_corrected) - now
+        time_until_midnight = midnight_corrected - now
         hours, remainder = divmod(time_until_midnight.seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
 
