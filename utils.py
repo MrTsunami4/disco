@@ -94,6 +94,10 @@ def get_server_delay():
     global delay
     delay = utcnow().timestamp() - snowflake_time(time_snowflake(utcnow())).timestamp()
 
+def midnight_without_delay_aware():
+    midnight_corrected = midnight - timedelta(seconds=delay)
+    return midnight_corrected
+
 def midnight_without_delay():
     midnight_corrected = midnight - timedelta(seconds=delay)
     return midnight_corrected.timetz()
