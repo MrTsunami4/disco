@@ -8,7 +8,7 @@ from discord.ext.commands import Cog
 
 from ui import DropdownView
 from config import TIMEZONE
-from utils import midnight, midnight_without_delay, delay
+from utils import midnight, midnight_without_delay, delay, midnight_without_delay_aware
 
 class BasicCommands(Cog):
     """Basic bot commands."""
@@ -75,7 +75,7 @@ class BasicCommands(Cog):
     async def midnight__without_delay(self, interaction: Interaction):
         """Tell the time until midnight without delay."""
         now = datetime.now(ZoneInfo(TIMEZONE))
-        midnight_corrected = midnight_without_delay()
+        midnight_corrected = midnight_without_delay_aware()
         time_until_midnight = datetime.combine(now.date() + timedelta(days=1), midnight_corrected) - now
         hours, remainder = divmod(time_until_midnight.seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
