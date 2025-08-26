@@ -20,9 +20,10 @@ class BasicCommands(Cog):
         )
         self.bot.tree.add_command(self.ctx_menu)
 
-    def get_midnight_time_corrected(self):
+    @staticmethod
+    def get_midnight_time_corrected():
         """Calculate the time for midnight of the minus the bot latency."""
-        now = datetime.now(ZoneInfo(TIMEZONE)) - timedelta(seconds=self.bot.latency)
+        now = datetime.now(ZoneInfo(TIMEZONE)) - timedelta(seconds=BasicCommands.bot.latency)
         midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
         return midnight.timetz()
 
