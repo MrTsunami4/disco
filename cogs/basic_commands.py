@@ -112,8 +112,9 @@ class BasicCommands(Cog):
     async def get_server_delay(self, interaction: Interaction):
         """Get the current server delay in seconds."""
         global delay
-        delay = utcnow().timestamp() - snowflake_time(time_snowflake(utcnow())).timestamp()
-        return await interaction.response.send_message(f"Current server delay is {delay:.3f} seconds.")
-
+        latency = self.bot.latency  # Latency in seconds
+        delay = latency
+        return await interaction.response.send_message(f"Server delay set to {delay:.2f} seconds")
+    
 async def setup(bot):
     await bot.add_cog(BasicCommands(bot))
