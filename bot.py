@@ -9,9 +9,13 @@ from utils import get_midnight_time_corrected
 class DiscoBot(commands.Bot):
     """Main Discord bot class with improved organization."""
 
+    instance = None  # Class variable to hold the singleton instance
+
     def __init__(self):
         intents = Intents.default()
         super().__init__(command_prefix=config.PREFIX, intents=intents)
+        if DiscoBot.instance is None:
+            DiscoBot.instance = self
 
     async def setup_hook(self):
         """Sets up the bot with required configurations."""
@@ -38,7 +42,7 @@ class DiscoBot(commands.Bot):
                     print(f"Failed to load extension {extension}: {e}")
 
 
-    @tasks.loop(time=get_midnight_time_corrected())
+    @tasks.loop(time=get_midnight_time_corrected(instance))
     async def midnight_task(self):
         """Task that runs at midnight."""
         channel = self.get_channel(config.GENERAL_CHANNEL_ID)

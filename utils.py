@@ -27,12 +27,11 @@ def get_midnight_time_aware():
     midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
     return midnight
 
-def get_midnight_time_corrected():
+def get_midnight_time_corrected(bot_instance):
     """Calculate the time for midnight of the next day minus the bot latency."""
     from zoneinfo import ZoneInfo
-    from bot import bot
 
-    now = datetime.now(ZoneInfo(TIMEZONE)) - timedelta(seconds=bot.latency)
+    now = datetime.now(ZoneInfo(TIMEZONE)) - timedelta(seconds=bot_instance.latency)
     midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
     return midnight.timetz()
 
