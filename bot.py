@@ -14,6 +14,7 @@ class DiscoBot(commands.Bot):
     def __init__(self):
         intents = Intents.default()
         super().__init__(command_prefix=config.PREFIX, intents=intents)
+        global instance
         if DiscoBot.instance is None:
             DiscoBot.instance = self
 
