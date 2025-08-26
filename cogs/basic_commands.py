@@ -86,7 +86,7 @@ class BasicCommands(Cog):
     async def midnight_without_delay(self, interaction: Interaction):
         """Sends the time until midnight without delay."""
         now = datetime.now(ZoneInfo(TIMEZONE))
-        time_until_midnight = get_midnight_time_corrected(self) - now
+        time_until_midnight = get_midnight_time_corrected(self.bot) - now
         hours, remainder = divmod(time_until_midnight.seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
 
