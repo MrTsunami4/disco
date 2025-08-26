@@ -14,12 +14,17 @@ def get_midnight_time():
     """Calculate the time for midnight of the next day."""
     from zoneinfo import ZoneInfo
 
-    current_time = datetime.now(ZoneInfo(TIMEZONE))
-    midnight = current_time.replace(
-        hour=0, minute=0, second=0, microsecond=0
-    ) + timedelta(days=1)
+    now = datetime.now(ZoneInfo(TIMEZONE))
+    midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
     return midnight.timetz()
 
+def get_midnight_time_aware():
+    """Get the next midnight time as a timezone-aware datetime object."""
+    from zoneinfo import ZoneInfo
+
+    now = datetime.now(ZoneInfo(TIMEZONE))
+    midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+    return midnight
 
 def embed_from_quote(quote_data: dict) -> Embed:
     """Create a Discord embed from quote data."""

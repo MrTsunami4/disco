@@ -7,7 +7,7 @@ from discord.ext.commands import Cog
 
 from ui import DropdownView
 from config import TIMEZONE
-from utils import get_midnight_time
+from utils import get_midnight_time, get_midnight_time_aware
 
 class BasicCommands(Cog):
     """Basic bot commands."""
@@ -62,7 +62,7 @@ class BasicCommands(Cog):
     async def midnight(self, interaction: Interaction):
         """Tell the time until midnight."""
         now = datetime.now(ZoneInfo(TIMEZONE))
-        time_until_midnight = get_midnight_time() - now
+        time_until_midnight = get_midnight_time_aware() - now
         hours, remainder = divmod(time_until_midnight.seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
 
