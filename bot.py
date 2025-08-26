@@ -17,10 +17,6 @@ class DiscoBot(commands.Bot):
     async def setup_hook(self):
         """Sets up the bot with required configurations."""
 
-        global midnight
-        if midnight is None:
-            get_midnight_time()
-
         # Start scheduled tasks
         self.midnight_task.start()
 
