@@ -62,9 +62,6 @@ class BasicCommands(Cog):
     async def midnight(self, interaction: Interaction):
         """Tell the time until midnight."""
         now = datetime.now(ZoneInfo(TIMEZONE))
-        midnight = (now + timedelta(days=1)).replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
         time_until_midnight = midnight - now
         hours, remainder = divmod(time_until_midnight.seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
