@@ -33,7 +33,7 @@ def get_midnight_time_corrected(bot_instance):
 
     now = datetime.now(ZoneInfo(TIMEZONE)) - timedelta(seconds=bot_instance.latency)
     midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-    return midnight.timetz()
+    return midnight
 
 def embed_from_quote(quote_data: dict) -> Embed:
     """Create a Discord embed from quote data."""
