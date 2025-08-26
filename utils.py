@@ -9,6 +9,7 @@ from requests.exceptions import RequestException
 
 
 from config import ADMIN_ID, TIMEZONE, WEATHER_API_KEY, WEATHER_API_BASE_URL
+from bot import bot
 
 def get_midnight_time():
     """Calculate the time for midnight of the next day."""
@@ -27,6 +28,13 @@ def get_midnight_time_aware():
     midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
     return midnight
 
+def get_midnight_time_corrected():
+    """Calculate the time for midnight of the next day minus the bot latency."""
+    from zoneinfo import ZoneInfo
+
+    now = datetime.now(ZoneInfo(TIMEZONE)) - timedelta(seconds=bot.latency)
+    midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+    return midnight.timetz()
 
 def embed_from_quote(quote_data: dict) -> Embed:
     """Create a Discord embed from quote data."""
