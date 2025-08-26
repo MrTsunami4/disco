@@ -7,7 +7,7 @@ from discord.ext.commands import Cog
 
 from ui import DropdownView
 from config import TIMEZONE
-from utils import midnight
+from utils import get_midnight_time
 
 class BasicCommands(Cog):
     """Basic bot commands."""
@@ -62,7 +62,7 @@ class BasicCommands(Cog):
     async def midnight(self, interaction: Interaction):
         """Tell the time until midnight."""
         now = datetime.now(ZoneInfo(TIMEZONE))
-        time_until_midnight = midnight - now
+        time_until_midnight = get_midnight_time() - now
         hours, remainder = divmod(time_until_midnight.seconds, 3600)
         minutes, seconds = divmod(remainder, 60)
 
@@ -70,18 +70,10 @@ class BasicCommands(Cog):
             f"Time until midnight: {hours}h {minutes}m {seconds}s"
         )
 
-
     @app_commands.command()
     async def ping(self, interaction: Interaction):
         """Pings the bot."""
         await interaction.response.send_message(f"Pong! {round(self.bot.latency * 1000)}ms")
-
-    @app_commands.command()
-    async def get_server_delay(self, interaction: Interaction):
-        """Get the current server delay in seconds."""
-        global delay
-        delay = utcnow().timestamp() - snowflake_time(time_snowflake(utcnow())).timestamp()
-        return await interaction.response.send_message(f"Server delay set to {delay:.2f} seconds")
 
     @app_commands.command()
     async def best_language(self, interaction: Interaction):

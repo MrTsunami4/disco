@@ -6,7 +6,6 @@ from discord import Embed, Guild
 from discord.errors import Forbidden
 from requests import get
 from requests.exceptions import RequestException
-from discord.utils import utcnow, time_snowflake, snowflake_time
 
 
 from config import ADMIN_ID, TIMEZONE, WEATHER_API_KEY, WEATHER_API_BASE_URL
