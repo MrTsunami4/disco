@@ -4,7 +4,7 @@ from discord.ext import commands, tasks
 
 
 import config
-from utils import get_midnight_time, get_server_delay, midnight_without_delay, one_min_before_midnight, ten_pm_time, midnight
+from utils import get_midnight_time
 
 
 class DiscoBot(commands.Bot):
@@ -23,8 +23,6 @@ class DiscoBot(commands.Bot):
 
         # Start scheduled tasks
         self.midnight_task.start()
-        self.one_min_before_midnight_task.start()
-        self.ten_pm_task.start()
 
         # Load all cogs
         await self.load_extensions()
@@ -44,17 +42,8 @@ class DiscoBot(commands.Bot):
                 except Exception as e:
                     print(f"Failed to load extension {extension}: {e}")
 
-    @tasks.loop(time=ten_pm_time())
-    async def ten_pm_task(self):
-        """Run the midnight function to redefine midnight time."""
-        get_midnight_time()
 
-    @tasks.loop(time=one_min_before_midnight())
-    async def one_min_before_midnight_task(self):
-        """Get the server delay one minute before midnight."""
-        get_server_delay()
-
-    @tasks.loop(time=midnight_without_delay())
+    @tasks.loop(time=get_midnight_time())
     async def midnight_task(self):
         """Task that runs at midnight."""
         channel = self.get_channel(config.GENERAL_CHANNEL_ID)

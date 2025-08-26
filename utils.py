@@ -11,13 +11,9 @@ from discord.utils import utcnow, time_snowflake, snowflake_time
 
 from config import ADMIN_ID, TIMEZONE, WEATHER_API_KEY, WEATHER_API_BASE_URL
 
-midnight = (datetime.min + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
-delay:float = 0.0  # in seconds
-
 def get_midnight_time():
     """Calculate the time for midnight of the next day."""
     from zoneinfo import ZoneInfo
-    global midnight
 
     current_time = datetime.now(ZoneInfo(TIMEZONE))
     midnight = current_time.replace(
@@ -89,23 +85,3 @@ def is_admin(user_id: int) -> bool:
     """Check if a user is an admin."""
     return user_id == ADMIN_ID
 
-def get_server_delay():
-    """Get the current server delay in seconds."""
-    global delay
-    delay = utcnow().timestamp() - snowflake_time(time_snowflake(utcnow())).timestamp()
-
-def midnight_without_delay_aware():
-    midnight_corrected = midnight - timedelta(seconds=delay)
-    return midnight_corrected
-
-def midnight_without_delay():
-    midnight_corrected = midnight - timedelta(seconds=delay)
-    return midnight_corrected.timetz()
-
-def one_min_before_midnight():
-    one_min_before_midnight = midnight - timedelta(minutes=1)
-    return one_min_before_midnight.timetz()
-
-def ten_pm_time():
-    ten_pm = midnight - timedelta(hours=2)
-    return ten_pm.timetz()

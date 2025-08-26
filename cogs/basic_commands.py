@@ -1,14 +1,13 @@
 from typing import Optional
-from datetime import datetime, timedelta
+from datetime import datetime
 from zoneinfo import ZoneInfo
 from discord import Interaction, Member, app_commands
-from discord.utils import format_dt
-from discord.utils import utcnow, time_snowflake, snowflake_time
+from discord.utils import format_dt, utcnow, time_snowflake, snowflake_time
 from discord.ext.commands import Cog
 
 from ui import DropdownView
 from config import TIMEZONE
-from utils import midnight, midnight_without_delay, delay, midnight_without_delay_aware
+from utils import midnight
 
 class BasicCommands(Cog):
     """Basic bot commands."""
@@ -71,18 +70,18 @@ class BasicCommands(Cog):
             f"Time until midnight: {hours}h {minutes}m {seconds}s"
         )
 
-    @app_commands.command()
-    async def midnight__without_delay(self, interaction: Interaction):
-        """Tell the time until midnight without delay."""
-        now = datetime.now(ZoneInfo(TIMEZONE))
-        midnight_corrected = midnight_without_delay_aware()
-        time_until_midnight = midnight_corrected - now
-        hours, remainder = divmod(time_until_midnight.seconds, 3600)
-        minutes, seconds = divmod(remainder, 60)
 
-        await interaction.response.send_message(
-            f"Time until midnight (corrected): {hours}h {minutes}m {seconds}s"
-        )
+    @app_commands.command()
+    async def ping(self, interaction: Interaction):
+        """Pings the bot."""
+        await interaction.response.send_message(f"Pong! {round(self.bot.latency * 1000)}ms")
+
+    @app_commands.command()
+    async def get_server_delay(self, interaction: Interaction):
+        """Get the current server delay in seconds."""
+        global delay
+        delay = utcnow().timestamp() - snowflake_time(time_snowflake(utcnow())).timestamp()
+        return await interaction.response.send_message(f"Server delay set to {delay:.2f} seconds")
 
     @app_commands.command()
     async def best_language(self, interaction: Interaction):
@@ -96,25 +95,6 @@ class BasicCommands(Cog):
             silent=True,
         )
 
-    @app_commands.command()
-    async def get_midnight_time(self, interaction: Interaction):
-        """Calculate the time for midnight of the next day."""
-        from zoneinfo import ZoneInfo
-        global midnight
-
-        current_time = datetime.now(ZoneInfo(TIMEZONE))
-        midnight = current_time.replace(
-            hour=0, minute=0, second=0, microsecond=0
-        ) + timedelta(days=1)
-        return await interaction.response.send_message(f"Midnight time set to {midnight.timetz()}")
-
-    @app_commands.command()
-    async def get_server_delay(self, interaction: Interaction):
-        """Get the current server delay in seconds."""
-        global delay
-        latency = self.bot.latency  # Latency in seconds
-        delay = latency
-        return await interaction.response.send_message(f"Server delay set to {delay:.2f} seconds")
     
 async def setup(bot):
     await bot.add_cog(BasicCommands(bot))
