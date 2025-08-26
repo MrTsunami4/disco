@@ -3,11 +3,12 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from discord import Interaction, Member, app_commands
 from discord.utils import format_dt
+from discord.utils import utcnow, time_snowflake, snowflake_time
 from discord.ext.commands import Cog
 
 from ui import DropdownView
 from config import TIMEZONE
-from utils import midnight, midnight_without_delay
+from utils import midnight, midnight_without_delay, delay
 
 class BasicCommands(Cog):
     """Basic bot commands."""
@@ -107,6 +108,12 @@ class BasicCommands(Cog):
         ) + timedelta(days=1)
         return await interaction.response.send_message(f"Midnight time set to {midnight.timetz()}")
 
+    @app_commands.command()
+    async def get_server_delay(self, interaction: Interaction):
+        """Get the current server delay in seconds."""
+        global delay
+        delay = utcnow().timestamp() - snowflake_time(time_snowflake(utcnow())).timestamp()
+        return await interaction.response.send_message(f"Current server delay is {delay:.3f} seconds.")
 
 async def setup(bot):
     await bot.add_cog(BasicCommands(bot))
