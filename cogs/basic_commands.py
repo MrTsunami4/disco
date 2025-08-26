@@ -1,5 +1,5 @@
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from discord import Interaction, Member, app_commands
 from discord.utils import format_dt, utcnow, time_snowflake, snowflake_time
@@ -74,6 +74,18 @@ class BasicCommands(Cog):
     async def ping(self, interaction: Interaction):
         """Pings the bot."""
         await interaction.response.send_message(f"Pong! {round(self.bot.latency * 1000)}ms")
+
+    @app_commands.command()
+    async def mid_night_without_delay(self, interaction: Interaction):
+        """Sends the time until midnight without delay."""
+        now = datetime.now(ZoneInfo(TIMEZONE)) - timedelta(seconds=self.bot.latency)
+        time_until_midnight = get_midnight_time_aware() - now
+        hours, remainder = divmod(time_until_midnight.seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+
+        await interaction.response.send_message(
+            f"Time until midnight without delay: {hours}h {minutes}m {seconds}s"
+        )
 
     @app_commands.command()
     async def best_language(self, interaction: Interaction):
