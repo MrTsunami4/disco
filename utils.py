@@ -9,7 +9,6 @@ from requests.exceptions import RequestException
 
 
 from config import ADMIN_ID, TIMEZONE, WEATHER_API_KEY, WEATHER_API_BASE_URL
-import bot  # Import bot instance for latency access
 
 def get_midnight_time():
     """Calculate the time for midnight of the next day."""
@@ -31,6 +30,7 @@ def get_midnight_time_aware():
 def get_midnight_time_corrected():
     """Calculate the time for midnight of the next day minus the bot latency."""
     from zoneinfo import ZoneInfo
+    from bot import bot
 
     now = datetime.now(ZoneInfo(TIMEZONE)) - timedelta(seconds=bot.latency)
     midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
