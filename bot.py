@@ -1,6 +1,7 @@
 from os import listdir
 from discord import Intents
 from discord.ext import commands, tasks
+from discord.utils import sleep_until
 
 
 import config
@@ -43,9 +44,11 @@ class DiscoBot(commands.Bot):
                     print(f"Failed to load extension {extension}: {e}")
 
 
-    @tasks.loop(time=get_midnight_time_corrected(instance))
+    @tasks.loop(hours=2)
     async def midnight_task(self):
         """Task that runs at midnight."""
+        midnight_time = get_midnight_time_corrected(self)
+        await sleep_until(midnight_time)
         channel = self.get_channel(config.GENERAL_CHANNEL_ID)
         if channel:
             await channel.send("https://www.youtube.com/watch?v=aES3XaSD9wc")
