@@ -2,13 +2,16 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, Tuple
 from asyncache import cached
 from cachetools import TTLCache
-from discord import Embed, Guild
+from discord import Guild
 from discord.errors import Forbidden
 from requests import get
 from requests.exceptions import RequestException
-
+from typing import TYPE_CHECKING
 
 from config import ADMIN_ID, TIMEZONE, WEATHER_API_KEY, WEATHER_API_BASE_URL
+
+if TYPE_CHECKING:
+    from bot import DiscoBot
 
 
 def get_midnight_time():
@@ -22,17 +25,10 @@ def get_midnight_time():
     return midnight
 
 
-def get_midnight_time_corrected(bot_instance):
+def get_midnight_time_corrected(bot_instance: DiscoBot):
     """Calculate the time for midnight of the next day minus the bot latency."""
     midnight = get_midnight_time() - timedelta(seconds=bot_instance.latency)
     return midnight
-
-
-def embed_from_quote(quote_data: dict) -> Embed:
-    """Create a Discord embed from quote data."""
-    return Embed(title="Quote", description=quote_data["content"]).set_author(
-        name=quote_data["author"]
-    )
 
 
 @cached(cache=TTLCache(maxsize=128, ttl=600))
