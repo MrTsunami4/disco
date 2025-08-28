@@ -1,5 +1,5 @@
 from typing import Optional
-from datetime import datetime, timedelta
+from datetime import datetime
 from zoneinfo import ZoneInfo
 from discord import Interaction, Member, app_commands
 from discord.utils import format_dt
@@ -8,6 +8,7 @@ from discord.ext.commands import Cog
 from ui import DropdownView
 from config import TIMEZONE
 from utils import get_midnight_time, get_midnight_time_corrected
+
 
 class BasicCommands(Cog):
     """Basic bot commands."""
@@ -19,13 +20,6 @@ class BasicCommands(Cog):
             callback=self.show_join_date,
         )
         self.bot.tree.add_command(self.ctx_menu)
-
-    @staticmethod
-    def get_midnight_time_corrected():
-        """Calculate the time for midnight of the minus the bot latency."""
-        now = datetime.now(ZoneInfo(TIMEZONE)) - timedelta(seconds=BasicCommands.bot.latency)
-        midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-        return midnight.timetz()
 
     @app_commands.command()
     async def hello(self, interaction: Interaction):
@@ -80,7 +74,9 @@ class BasicCommands(Cog):
     @app_commands.command()
     async def ping(self, interaction: Interaction):
         """Pings the bot."""
-        await interaction.response.send_message(f"Pong! {round(self.bot.latency * 1000)}ms")
+        await interaction.response.send_message(
+            f"Pong! {round(self.bot.latency * 1000)}ms"
+        )
 
     @app_commands.command()
     async def midnight_without_delay(self, interaction: Interaction):
@@ -106,6 +102,6 @@ class BasicCommands(Cog):
             silent=True,
         )
 
-    
+
 async def setup(bot):
     await bot.add_cog(BasicCommands(bot))

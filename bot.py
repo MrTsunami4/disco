@@ -7,6 +7,7 @@ from discord.utils import sleep_until
 import config
 from utils import get_midnight_time_corrected
 
+
 class DiscoBot(commands.Bot):
     """Main Discord bot class with improved organization."""
 
@@ -43,7 +44,6 @@ class DiscoBot(commands.Bot):
                 except Exception as e:
                     print(f"Failed to load extension {extension}: {e}")
 
-
     @tasks.loop()
     async def midnight_task(self):
         """Task that runs at midnight."""
@@ -57,7 +57,6 @@ class DiscoBot(commands.Bot):
     async def before_midnight_task(self):
         """Wait until the bot is ready before starting the task."""
         await self.wait_until_ready()
-
 
 
 bot = DiscoBot()

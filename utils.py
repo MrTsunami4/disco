@@ -10,12 +10,15 @@ from requests.exceptions import RequestException
 
 from config import ADMIN_ID, TIMEZONE, WEATHER_API_KEY, WEATHER_API_BASE_URL
 
+
 def get_midnight_time():
     """Get the next midnight time as a timezone-aware datetime object."""
     from zoneinfo import ZoneInfo
 
     now = datetime.now(ZoneInfo(TIMEZONE))
-    midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
+    midnight = now.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(
+        days=1
+    )
     return midnight
 
 
@@ -23,6 +26,7 @@ def get_midnight_time_corrected(bot_instance):
     """Calculate the time for midnight of the next day minus the bot latency."""
     midnight = get_midnight_time() - timedelta(seconds=bot_instance.latency)
     return midnight
+
 
 def embed_from_quote(quote_data: dict) -> Embed:
     """Create a Discord embed from quote data."""
@@ -86,4 +90,3 @@ async def count_user_messages_in_last_24_hours(
 def is_admin(user_id: int) -> bool:
     """Check if a user is an admin."""
     return user_id == ADMIN_ID
-
