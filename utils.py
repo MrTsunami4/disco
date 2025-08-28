@@ -25,7 +25,7 @@ def get_midnight_time():
     return midnight
 
 
-def get_midnight_time_corrected(bot_instance: DiscoBot):
+def get_midnight_time_corrected(bot_instance: "DiscoBot") -> datetime:
     """Calculate the time for midnight of the next day minus the bot latency."""
     midnight = get_midnight_time() - timedelta(seconds=bot_instance.latency)
     return midnight
