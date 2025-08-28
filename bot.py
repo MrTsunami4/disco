@@ -1,3 +1,4 @@
+from datetime import timedelta
 from os import listdir
 from discord import Intents
 from discord.ext import commands, tasks
@@ -5,7 +6,7 @@ from discord.utils import sleep_until
 
 
 import config
-from utils import get_midnight_time_corrected
+from utils import get_midnight_time, get_midnight_time_corrected
 
 
 class DiscoBot(commands.Bot):
@@ -47,6 +48,8 @@ class DiscoBot(commands.Bot):
     @tasks.loop()
     async def midnight_task(self):
         """Task that runs at midnight."""
+        just_before_midnight = get_midnight_time() - timedelta(minutes=1)
+        await sleep_until(just_before_midnight)
         midnight_time = get_midnight_time_corrected(self)
         await sleep_until(midnight_time)
         channel = self.get_channel(config.GENERAL_CHANNEL_ID)
