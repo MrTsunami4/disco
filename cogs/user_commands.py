@@ -19,6 +19,12 @@ class UserCommands(Cog):
         """Show the number of messages sent by a user on the server in the last 24 hours"""
         await interaction.response.defer()
 
+        if not interaction.guild:
+            await interaction.followup.send(
+                "This command can only be used in a server.", ephemeral=True
+            )
+            return
+
         try:
             message_count = await count_user_messages_in_last_24_hours(
                 interaction.guild,

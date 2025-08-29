@@ -53,11 +53,26 @@ class BasicCommands(Cog):
     )
     async def joined(self, interaction: Interaction, member: Optional[Member] = None):
         """Says when a member joined."""
-        member = member or interaction.user
-        await interaction.response.send_message(
-            f"{member.mention} joined {format_dt(member.joined_at)},",
-            silent=True,
+        member = member or (
+            interaction.guild and interaction.guild.get_member(interaction.user.id)
         )
+        if not member:
+            await interaction.response.send_message(
+                "This command can only be used in a server.",
+                ephemeral=True,
+            )
+            return
+
+        if member.joined_at:
+            await interaction.response.send_message(
+                f"{member.mention} joined {format_dt(member.joined_at)}",
+                silent=True,
+            )
+        else:
+            await interaction.response.send_message(
+                "Could not retrieve member or join date.",
+                ephemeral=True,
+            )
 
     @app_commands.command()
     async def midnight(self, interaction: Interaction):
@@ -97,9 +112,16 @@ class BasicCommands(Cog):
 
     async def show_join_date(self, interaction: Interaction, member: Member):
         """Context menu to show when a member joined."""
+        if member.joined_at:
+            await interaction.response.send_message(
+                f"{member.mention} joined at {format_dt(member.joined_at)}",
+                silent=True,
+            )
+            return
+
         await interaction.response.send_message(
-            f"{member.mention} joined at {format_dt(member.joined_at)}",
-            silent=True,
+            f"Could not retrieve join date for {member.mention}.",
+            ephemeral=True,
         )
 
 

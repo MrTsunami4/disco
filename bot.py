@@ -1,6 +1,6 @@
 from datetime import timedelta
 from os import listdir
-from discord import Intents
+from discord import Intents, TextChannel
 from discord.ext import commands, tasks
 from discord.utils import sleep_until
 
@@ -53,7 +53,7 @@ class DiscoBot(commands.Bot):
         midnight_time = get_midnight_time_corrected(self)
         await sleep_until(midnight_time)
         channel = self.get_channel(config.GENERAL_CHANNEL_ID)
-        if channel:
+        if isinstance(channel, TextChannel):
             await channel.send("https://www.youtube.com/watch?v=aES3XaSD9wc")
 
     @midnight_task.before_loop
@@ -68,9 +68,16 @@ bot = DiscoBot()
 @bot.event
 async def on_ready():
     """Called when the bot is ready."""
-    print(f"Logged in as {bot.user} (ID: {bot.user.id})")
+    if bot.user is not None:
+        print(f"Logged in as {bot.user} (ID: {bot.user.id})")
+    else:
+        print("Logged in, but bot user is None.")
     print("------")
 
 
 if __name__ == "__main__":
+    if config.TOKEN is None:
+        raise ValueError(
+            "Discord bot token (config.TOKEN) is None. Please set a valid token in your config."
+        )
     bot.run(config.TOKEN)
