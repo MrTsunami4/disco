@@ -12,14 +12,10 @@ from utils import get_midnight_time, get_midnight_time_corrected
 class DiscoBot(commands.Bot):
     """Main Discord bot class with improved organization."""
 
-    instance = None  # Class variable to hold the singleton instance
 
     def __init__(self):
         intents = Intents.default()
         super().__init__(command_prefix=config.PREFIX, intents=intents)
-        global instance
-        if DiscoBot.instance is None:
-            DiscoBot.instance = self
 
     async def setup_hook(self):
         """Sets up the bot with required configurations."""
